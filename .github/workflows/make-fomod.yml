@@ -327,4 +327,11 @@ jobs:
         name: ${{ steps.fomod.outputs.INSTALLER_NAME }}
         if-no-files-found: error
         path: ${{ steps.fomod.outputs.INSTALLER_DIR }}
+
+    - name: Publish
+      if: github.ref_type == 'tag'
+      uses: svenstaro/upload-release-action@2.3.0
+      with:
+        file: ${{ steps.fomod.outputs.INSTALLER_DIR }}
+
       
