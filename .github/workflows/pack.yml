@@ -133,6 +133,7 @@ jobs:
     if: ${{ needs.prepare.outputs.HAS_SE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
+      PROJECT_NAME: ${{ inputs.PROJECT_NAME }}
       VARIANT: "se"
     
   ae:
@@ -148,6 +149,7 @@ jobs:
     if:  ${{ needs.prepare.outputs.HAS_VR == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
+      PROJECT_NAME: ${{ inputs.PROJECT_NAME }}
       VARIANT: "vr"
 
   fomod:
