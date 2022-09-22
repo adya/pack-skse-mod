@@ -1,0 +1,330 @@
+name: Make FOMOD
+
+on:
+  workflow_call:
+    inputs:
+      MOD_NAME:
+        type: string
+      MOD_AUTHOR:
+        type: string
+      MOD_VERSION:
+        type: string
+      MOD_NEXUS_ID:
+        type: string
+      REQUIRED_PATH:
+        type: string
+      DST_PATH:
+        type: string
+      TITLE:
+        type: string
+      GROUP_NAME:
+        type: string
+      SE_PATH:
+        type: string
+      SE_NAME:
+        type: string
+      SE_DESCR:
+        type: string
+      SE_VERSION:
+        type: string
+      SE_ARTIFACT:
+        type: string
+      AE_PATH:
+        type: string
+      AE_NAME:
+        type: string
+      AE_DESCR:
+        type: string
+      AE_VERSION:
+        type: string
+      AE_ARTIFACT:
+        type: string
+      VR_PATH:
+        type: string
+      VR_NAME:
+        type: string
+      VR_DESCR:
+        type: string
+      VR_VERSION:
+        type: string
+      VR_ARTIFACT:
+        type: string
+    outputs:
+      INSTALLER_NAME:
+        value: ${{ jobs.make.outputs.INSTALLER_NAME }}
+
+env:
+  ARTIFACTS_DIR: "artifacts"
+  INSTALLER_DIR: "installer"
+
+jobs:
+  make:
+    runs-on: windows-latest
+    outputs:
+      INSTALLER_NAME: ${{ steps.fomod.outputs.INSTALLER_NAME }}
+    steps:
+    - name: Create FOMOD 
+      id: fomod
+      shell: pwsh
+      run: |
+        $HAS_SE = ![string]::IsNullOrEmpty("${{inputs.SE_ARTIFACT}}")
+        $HAS_AE = ![string]::IsNullOrEmpty("${{inputs.AE_ARTIFACT}}")
+        $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.VR_ARTIFACT}}")
+
+        # Get the first available version (defaults to 1.0.0 if no versions found)
+        $versions = "${{inputs.SE_VERSION}}","${{inputs.AE_VERSION}}","${{inputs.VR_VERSION}}","1.0.0"
+        $MOD_VERSION = $versions | Where{$_ -ne ""} | Select-Object -first 1
+
+        $MOD_NAME = "${{inputs.MOD_NAME}}"
+        $MOD_AUTHOR = "${{inputs.MOD_AUTHOR}}"
+        $MOD_VERSION = "${{inputs.MOD_VERSION}}"
+        $MOD_NEXUS_ID = "${{inputs.MOD_NEXUS_ID}}"
+        $REQUIRED_PATH = "${{inputs.REQUIRED_PATH}}"
+        $DST_PATH = "${{inputs.DST_PATH}}"
+        $TITLE = "${{inputs.TITLE}}"
+        $GROUP_NAME = "${{inputs.GROUP_NAME}}"
+        $SE_PATH = '${{inputs.SE_PATH}}'
+        $SE_NAME = '${{inputs.SE_NAME}}'
+        $SE_DESCR = '${{inputs.SE_DESCR}}'
+        $AE_PATH = '${{inputs.AE_PATH}}'
+        $AE_NAME = '${{inputs.AE_NAME}}'
+        $AE_DESCR = '${{inputs.AE_DESCR}}'
+        $VR_PATH = '${{inputs.VR_PATH}}'
+        $VR_NAME = '${{inputs.VR_NAME}}'
+        $VR_DESCR = '${{inputs.VR_DESCR}}'
+        
+        # "Private" vars. You shouldn't change it
+        $INSTALLER_DIR = "$PWD/${{env.INSTALLER_DIR}}"
+        $FOMOD_DIR = "$INSTALLER_DIR/fomod"
+        $MOD_CONFIG_PATH = "$FOMOD_DIR/ModuleConfig.xml"
+        $MOD_INFO_PATH = "$FOMOD_DIR/info.xml"
+        $MOD_NEXUS_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/$MOD_NEXUS_ID"
+
+        # Writes installation option with given title, desciption and path. Providing auto-select behavior for specified versions.
+        function Write-Plugin {
+            [CmdletBinding()]
+            param (
+                [System.XML.XmlWriter] $xmlWriter,
+                [string] $Title,
+                [string] $Descr,
+                [string] $SrcPath,
+                [string] $RecommendedVersion,
+                [string] $OptionalVersion
+            )
+            
+            process {
+                $xmlWriter.WriteStartElement("plugin")
+                $xmlWriter.WriteAttributeString("name", $Title)
+                $xmlWriter.WriteElementString("description", $Descr)
+                $xmlWriter.WriteStartElement("files")
+                    $xmlWriter.WriteStartElement("folder")
+                        $xmlWriter.WriteAttributeString("source", $SrcPath)
+                        $xmlWriter.WriteAttributeString("destination", $DST_PATH)
+                        $xmlWriter.WriteAttributeString("priority", "0")
+                    $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteStartElement("typeDescriptor")
+                    $xmlWriter.WriteStartElement("dependencyType")
+                        $xmlWriter.WriteStartElement("defaultType")
+                            $xmlWriter.WriteAttributeString("name", "Optional")
+                        $xmlWriter.WriteEndElement()
+                        $xmlWriter.WriteStartElement("patterns")
+                        if (![string]::IsNullOrEmpty($RecommendedVersion)) {
+                            $xmlWriter.WriteStartElement("pattern")
+                                $xmlWriter.WriteStartElement("dependencies")
+                                    $xmlWriter.WriteStartElement("gameDependency")
+                                        $xmlWriter.WriteAttributeString("version", $RecommendedVersion)
+                                    $xmlWriter.WriteEndElement()
+                                $xmlWriter.WriteEndElement()
+                                $xmlWriter.WriteStartElement("type")
+                                    $xmlWriter.WriteAttributeString("name", "Recommended")
+                                $xmlWriter.WriteEndElement()
+                            $xmlWriter.WriteEndElement()
+                        }
+                        if (![string]::IsNullOrEmpty($OptionalVersion)) {
+                            $xmlWriter.WriteStartElement("pattern")
+                                $xmlWriter.WriteStartElement("dependencies")
+                                    $xmlWriter.WriteStartElement("gameDependency")
+                                        $xmlWriter.WriteAttributeString("version", $OptionalVersion)
+                                    $xmlWriter.WriteEndElement()
+                                $xmlWriter.WriteEndElement()
+                                $xmlWriter.WriteStartElement("type")
+                                    $xmlWriter.WriteAttributeString("name", "Optional")
+                                $xmlWriter.WriteEndElement()
+                            $xmlWriter.WriteEndElement()
+                        }
+                        $xmlWriter.WriteEndElement()
+                    $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteEndElement()
+            $xmlWriter.WriteEndElement()
+            }
+        }
+
+        if (!$HAS_SE -and !$HAS_AE -and !$HAS_VR) {
+            echo "No available variants"
+            exit
+        }
+
+        function Write-Config {
+          process {
+            $xmlSettings = New-Object System.Xml.XmlWriterSettings
+            $xmlSettings.Indent = $true
+            $xmlSettings.IndentChars = "    "
+            
+            $xmlWriter = [System.XML.XmlWriter]::Create($MOD_CONFIG_PATH, $xmlSettings)
+            $xmlWriter.WriteStartDocument()
+            $xmlWriter.WriteStartElement("config")
+                $xmlWriter.WriteAttributeString("xmlns", "xsi", $null, "http://www.w3.org/2001/XMLSchema-instance")
+                $xmlWriter.WriteAttributeString("noNamespaceSchemaLocation", "http://www.w3.org/2001/XMLSchema-instance", "http://qconsulting.ca/fo3/ModConfig5.0.xsd")
+                $xmlWriter.WriteElementString("moduleName", $MOD_NAME)
+                $xmlWriter.WriteStartElement("requiredInstallFiles")
+                    $xmlWriter.WriteStartElement("folder")
+                        $xmlWriter.WriteAttributeString("source", $REQUIRED_PATH)
+                        $xmlWriter.WriteAttributeString("destination", $DST_PATH)
+                    $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteStartElement("installSteps")
+                    $xmlWriter.WriteAttributeString("order", "Explicit")
+                    $xmlWriter.WriteStartElement("installStep")
+                        $xmlWriter.WriteAttributeString("name", $TITLE)
+                        $xmlWriter.WriteStartElement("optionalFileGroups")
+                            $xmlWriter.WriteAttributeString("order", "Explicit")
+                            $xmlWriter.WriteStartElement("group")
+                                $xmlWriter.WriteAttributeString("name", $GROUP_NAME)
+                                $xmlWriter.WriteAttributeString("type", "SelectExactlyOne")
+                                $xmlWriter.WriteStartElement("plugins")
+                                    $xmlWriter.WriteAttributeString("order", "Explicit")
+                                    if ($HAS_SE) {
+                                        Write-Plugin -xmlWriter $xmlWriter -Title $SE_NAME -Descr $SE_DESCR -SrcPath $SE_PATH -RecommendedVersion "1.5" -OptionalVersion "1.6"
+                                    }
+                                    if ($HAS_AE) {
+                                        Write-Plugin -xmlWriter $xmlWriter -Title $AE_NAME -Descr $AE_DESCR -SrcPath $AE_PATH -RecommendedVersion "1.6"
+                                    }
+                                    if ($HAS_VR) {
+                                        Write-Plugin -xmlWriter $xmlWriter -Title $VR_NAME -Descr $VR_DESCR -SrcPath $VR_PATH -RecommendedVersion "1.4"
+                                    }
+                                $xmlWriter.WriteEndElement()
+                            $xmlWriter.WriteEndElement()
+                        $xmlWriter.WriteEndElement()
+                    $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteEndElement()
+            $xmlWriter.WriteEndElement()
+            $xmlWriter.WriteEndDocument()
+            $xmlWriter.Flush()
+            $xmlWriter.Close()
+          }
+        }
+
+        function Write-Info {
+            process {
+                $xmlSettings = New-Object System.Xml.XmlWriterSettings
+                $xmlSettings.Indent = $true
+                $xmlSettings.IndentChars = "    "
+                
+                $xmlWriter = [System.XML.XmlWriter]::Create($MOD_INFO_PATH, $xmlSettings)
+                $xmlWriter.WriteStartDocument()
+                    $xmlWriter.WriteStartElement("fomod")
+                        $xmlWriter.WriteElementString("Name", $MOD_NAME)
+                        $xmlWriter.WriteElementString("Author", $MOD_AUTHOR)
+                        $xmlWriter.WriteElementString("Version", $MOD_VERSION)
+                        if (![string]::IsNullOrEmpty($MOD_NEXUS_ID)) {
+                          $xmlWriter.WriteElementString("Website", $MOD_NEXUS_URL)
+                        }
+                        
+                    $xmlWriter.WriteEndElement()
+                $xmlWriter.WriteEndDocument()
+                $xmlWriter.Flush()
+                $xmlWriter.Close()
+            }
+        }
+
+        # Finally we can create the installer
+        New-Item $FOMOD_DIR -ItemType Directory -Force | Out-Null
+        echo "Creating FOMOD: ✅"
+        echo "Name: $MOD_NAME"
+        echo "Version: $MOD_VERSION"
+        echo "Author: $MOD_AUTHOR"
+        if (![string]::IsNullOrEmpty($MOD_NEXUS_ID)) {
+          echo "Nexus: $MOD_NEXUS_URL"
+        }
+
+        # And populate with available variants
+        if ($HAS_SE) {
+            New-Item "$INSTALLER_DIR/$SE_PATH" -ItemType Directory -Force | Out-Null
+            echo "Adding SE Variant plugin: ✅"
+            echo "Name: $SE_NAME"
+            echo "Description: $SE_DESCR"
+            echo "Path: $SE_PATH"
+        } else {
+            echo "Adding SE Variant plugin: ⬛"
+        }
+        if ($HAS_AE) {
+            New-Item "$INSTALLER_DIR/$AE_PATH" -ItemType Directory -Force | Out-Null
+         echo "Adding AE Variant plugin: ✅"
+            echo "Name: $AE_NAME"
+            echo "Description: $AE_DESCR"
+            echo "Path: $AE_PATH"
+        } else {
+            echo "Adding AE Variant plugin: ⬛"
+        }
+        if ($HAS_VR) {
+            New-Item "$INSTALLER_DIR/$VR_PATH" -ItemType Directory -Force | Out-Null
+         echo "Adding VR Variant plugin: ✅"
+            echo "Name: $VR_NAME"
+            echo "Description: $VR_DESCR"
+            echo "Path: $VR_PATH"
+        } else {
+            echo "Adding VR Variant plugin: ⬛"
+        }
+
+        Write-Info
+        Write-Config
+
+        echo "::set-output name=INSTALLER_NAME::$MOD_NAME"
+        echo "::set-output name=INSTALLER_DIR::$INSTALLER_DIR"
+        echo "::set-output name=SE_PATH::$INSTALLER_DIR/$SE_PATH"
+        echo "::set-output name=AE_PATH::$INSTALLER_DIR/$AE_PATH"
+        echo "::set-output name=VR_PATH::$INSTALLER_DIR/$VR_PATH"
+        echo "Created $MOD_NAME ($MOD_VERSION) FOMOD Installer ✅"
+        echo "Location: $INSTALLER_DIR"
+
+    - uses: actions/download-artifact@v3
+      with:
+        path: ${{env.ARTIFACTS_DIR}}
+
+    - name: Pack dlls
+      shell: pwsh
+      run: |
+        $HAS_SE = ![string]::IsNullOrEmpty("${{ inputs.SE_ARTIFACT }}")
+        $HAS_AE = ![string]::IsNullOrEmpty("${{ inputs.AE_ARTIFACT }}")
+        $HAS_VR = ![string]::IsNullOrEmpty("${{ inputs.VR_ARTIFACT }}")
+        $SE_PATH = "${{ steps.fomod.outputs.SE_PATH }}"
+        $AE_PATH = "${{ steps.fomod.outputs.AE_PATH }}"
+        $VR_PATH = "${{ steps.fomod.outputs.VR_PATH }}"
+
+        if($HAS_SE) {
+          dir "${{env.ARTIFACTS_DIR}}/${{inputs.SE_ARTIFACT}}/*" | mv -dest "$SE_PATH"
+          echo "Packing SE Variant: ✅ ($SE_PATH)"
+        } else {
+          echo "Packing SE Variant: ⬛"
+        }
+        if($HAS_AE) {
+          dir "${{env.ARTIFACTS_DIR}}/${{inputs.AE_ARTIFACT}}/*" | mv -dest "$AE_PATH"
+          echo "Packing AE Variant: ✅ ($AE_PATH)"
+        } else {
+          echo "Packing AE Variant: ⬛"
+        }
+        if($HAS_VR) {
+          dir "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}/*" | mv -dest "$VR_PATH"
+          echo "Packing VR Variant: ✅ ($VR_PATH)"
+        } else {
+          echo "Packing VR Variant: ⬛"
+        }
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with: 
+        name: ${{ steps.fomod.outputs.INSTALLER_NAME }}
+        if-no-files-found: error
+        path: ${{ steps.fomod.outputs.INSTALLER_DIR }}
+      
