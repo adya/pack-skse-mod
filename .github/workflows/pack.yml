@@ -128,14 +128,14 @@ jobs:
             echo "::set-output name=HAS_VR::false"
           }
 
-  build-se:
+  se:
     needs: prepare
     if: ${{ needs.prepare.outputs.HAS_SE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
       VARIANT: "se"
     
-  build-ae:
+  ae:
     needs: prepare
     if:  ${{ needs.prepare.outputs.HAS_AE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
@@ -143,7 +143,7 @@ jobs:
       PROJECT_NAME: ${{ inputs.PROJECT_NAME }}
       VARIANT: "ae"
 
-  build-vr:
+  vr:
     needs: prepare
     if:  ${{ needs.prepare.outputs.HAS_VR == 'true' }}
     uses: ./.github/workflows/build-variant.yml
@@ -151,7 +151,7 @@ jobs:
       VARIANT: "vr"
 
   fomod:
-    needs: [prepare, build-se, build-ae, build-vr]
+    needs: [prepare, se, ae, vr]
     if:  ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
     uses: ./.github/workflows/make-fomod.yml
     with:
@@ -165,15 +165,15 @@ jobs:
       SE_PATH: ${{ inputs.FOMOD_SE_PATH }}
       SE_NAME: ${{ inputs.FOMOD_SE_NAME }}
       SE_DESCR: ${{ inputs.FOMOD_SE_DESCR }}
-      SE_VERSION: ${{ needs.build-se.outputs.PRODICT_VERSION }}
-      SE_ARTIFACT: ${{ needs.build-se.outputs.ARTIFACT_NAME }}
+      SE_VERSION: ${{ needs.se.outputs.PRODICT_VERSION }}
+      SE_ARTIFACT: ${{ needs.se.outputs.ARTIFACT_NAME }}
       AE_PATH: ${{ inputs.FOMOD_AE_PATH }}
       AE_NAME: ${{ inputs.FOMOD_AE_NAME }}
       AE_DESCR: ${{ inputs.FOMOD_AE_DESCR }}
-      AE_VERSION: ${{ needs.build-ae.outputs.PRODICT_VERSION }}
-      AE_ARTIFACT: ${{ needs.build-ae.outputs.ARTIFACT_NAME }}
+      AE_VERSION: ${{ needs.ae.outputs.PRODICT_VERSION }}
+      AE_ARTIFACT: ${{ needs.ae.outputs.ARTIFACT_NAME }}
       VR_PATH: ${{ inputs.FOMOD_VR_PATH }}
       VR_NAME: ${{ inputs.FOMOD_VR_NAME }}
       VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
-      VR_VERSION: ${{ needs.build-vr.outputs.PRODICT_VERSION }}
-      VR_ARTIFACT: ${{ needs.build-vr.outputs.ARTIFACT_NAME }}
+      VR_VERSION: ${{ needs.vr.outputs.PRODICT_VERSION }}
+      VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
