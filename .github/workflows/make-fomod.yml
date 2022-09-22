@@ -321,6 +321,8 @@ jobs:
           echo "Packing VR Variant: ⬛"
         }
 
+        Compress-Archive -Path "${{ steps.fomod.outputs.INSTALLER_DIR }}" -DestinationPath "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with: 
@@ -332,6 +334,6 @@ jobs:
       if: github.ref_type == 'tag'
       uses: svenstaro/upload-release-action@2.3.0
       with:
-        file: ${{ steps.fomod.outputs.INSTALLER_DIR }}
+        file: "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
 
       
