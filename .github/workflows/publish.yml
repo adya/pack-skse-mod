@@ -6,7 +6,7 @@ on:
       INSTALLER_NAME:
         type: string
 jobs:
-  publish-github-release:
+  github:
     runs-on: windows-latest
     steps:
     - uses: actions/download-artifact@v3
