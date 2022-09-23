@@ -65,6 +65,7 @@ jobs:
       with:
         vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
         vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
+        vcpkgJsonGlob: '${{inputs.CMAKE_PROJECT_DIR}}/vcpkg.json'
 
     - name: Run CMake with build config
       uses: lukka/run-cmake@v10

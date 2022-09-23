@@ -244,7 +244,7 @@ jobs:
 
   fomod:
     needs: [prepare, se, ae, vr]
-    if:  ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
+    if: always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure'))
     uses: ./.github/workflows/make-fomod.yml
     with:
       MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
@@ -269,3 +269,10 @@ jobs:
       VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
       VR_VERSION: ${{ needs.vr.outputs.PRODICT_VERSION }}
       VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
+  
+  publish:
+    needs: [fomod]
+    if: github.ref_type == 'tag'
+    uses: ./.github/workflows/publish.yml
+    with:
+      INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}

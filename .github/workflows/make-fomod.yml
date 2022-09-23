@@ -329,12 +329,4 @@ jobs:
         name: ${{ steps.fomod.outputs.INSTALLER_NAME }}
         if-no-files-found: error
         path: ${{ steps.fomod.outputs.INSTALLER_DIR }}
-
-    - name: Publish
-      if: github.ref_type == 'tag'
-      uses: svenstaro/upload-release-action@2.3.0
-      with:
-        asset_name: "${{ steps.fomod.outputs.INSTALLER_NAME }}"
-        file: "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
-
       
