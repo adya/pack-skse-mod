@@ -18,39 +18,54 @@ on:
         description: "Name of the CMake variable that contains name of the built binary. Note that this variable must be CACHE variable."
         required: false
         default: "NAME"
-      CMAKE_BINARY_VERSION_VAR:
-        type: string
-        description: "Name of the CMake variable that contains version of the built binary. Note that this variable must be CACHE variable."
-        required: false
-        default: "VERSION"
       CMAKE_BINARY_VERSION:
         type: string
         description: "Version of the of the built binary. When CMAKE_BINARY_VERSION is set it takes precedence over CMAKE_SE_PRESET."
         required: false
         default: ''
-      CMAKE_SE_PRESET:
+      CMAKE_BINARY_VERSION_VAR:
         type: string
-        description: "Name of the preset declared in CMakePresets that configures project to build SE variant."
+        description: "Name of the CMake variable that contains version of the built binary. Note that this variable must be CACHE variable."
+        required: false
+        default: "VERSION"
+      CMAKE_SE_CONFIG_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to use to generate the project files for SE variant."
         required: false
         default: 'vs2022-windows-vcpkg-se'
+      CMAKE_SE_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to build the project for SE variant."
+        required: false
+        default: ''
       CMAKE_SE_BINARY_DIR:
         type: string
         required: false
         default: "build"
-      CMAKE_AE_PRESET:
+      CMAKE_AE_CONFIG_PRESET:
         type: string
-        description: "Name of the preset declared in CMakePresets that configures project to build AE variant."
+        description: "Name of the CMakePresets.json's configuration to use to generate the project files for AE variant."
         required: false
         default: 'vs2022-windows-vcpkg-ae'
+      CMAKE_AE_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to build the project for AE variant."
+        required: false
+        default: ''
       CMAKE_AE_BINARY_DIR:
         type: string
         required: false
         default: "buildae"
-      CMAKE_VR_PRESET:
+      CMAKE_VR_CONFIG_PRESET:
         type: string
-        description: "Name of the preset declared in CMakePresets that configures project to build VR variant."
+        description: "Name of the CMakePresets.json's configuration to use to generate the project files for VR variant."
         required: false
         default: 'vs2022-windows-vcpkg-vr'
+      CMAKE_VR_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to build the project for VR variant."
+        required: false
+        default: ''
       CMAKE_VR_BINARY_DIR:
         type: string
         required: false
@@ -151,9 +166,15 @@ jobs:
         shell: pwsh
         run: |
           $LIST = cmake --list-presets
-          $HAS_SE = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_SE_PRESET}}" -Quiet
-          $HAS_AE = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_AE_PRESET}}" -Quiet
-          $HAS_VR = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_VR_PRESET}}" -Quiet
+          $HAS_SE_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet
+          $HAS_AE_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet
+          $HAS_VR_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet
+          $HAS_SE_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_SE_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_AE_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_AE_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_VR_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_VR_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_SE = $HAS_SE_CONFIG -and $HAS_SE_BUILD
+          $HAS_AE = $HAS_AE_CONFIG -and $HAS_AE_BUILD
+          $HAS_VR = $HAS_VR_CONFIG -and $HAS_VR_BUILD
           if ($HAS_SE) {
             echo "SE Variant: ✅"
             echo "::set-output name=HAS_SE::true"
@@ -182,7 +203,8 @@ jobs:
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_PRESET: ${{ inputs.CMAKE_SE_PRESET }}
+      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_SE_CONFIG_PRESET }}
+      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_SE_BUILD_PRESET }}
       BINARY_DIR: ${{ inputs.CMAKE_SE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -196,7 +218,8 @@ jobs:
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_PRESET: ${{ inputs.CMAKE_AE_PRESET }}
+      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
+      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
       BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -210,7 +233,8 @@ jobs:
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_PRESET: ${{ inputs.CMAKE_VR_PRESET }}
+      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_VR_CONFIG_PRESET }}
+      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_VR_BUILD_PRESET }}
       BINARY_DIR: ${{ inputs.CMAKE_VR_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}

@@ -6,7 +6,10 @@ on:
       CMAKE_PROJECT_DIR:
         type: string
         required: true
-      CMAKE_PRESET:
+      CMAKE_CONFIG_PRESET:
+        type: string
+        required: true
+      CMAKE_BUILD_PRESET:
         type: string
         required: true
       BINARY_DIR:
@@ -40,6 +43,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  vcpkgCommitId: '01b29f6d8212bc845da64773b18665d682f5ab66'
 
 jobs:
   build:
@@ -53,14 +57,26 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        submodules: recursive 
-    
-    - name: Configure CMake
-      run: cmake --preset ${{inputs.CMAKE_PRESET}}
+        submodules: recursive
+    - uses: lukka/get-cmake@latest
+    - name: Restore artifacts, or setup vcpkg (do not install any package)
+      uses: lukka/run-vcpkg@v10
+      id: runvcpkg
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
+        vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
 
-    - name: Build
-      run: cmake --build ${{inputs.BINARY_DIR}} --config ${{env.BUILD_TYPE}}
+    - name: Run CMake with build config
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: ${{inputs.CMAKE_CONFIG_PRESET}}
+        buildPreset: ${{inputs.CMAKE_BUILD_PRESET}}
     
+    - name: Run CMake build for older presets
+      if: inputs.CMAKE_BUILD_PRESET == ''
+      shell: pwsh
+      run: cmake --build ${{inputs.BINARY_DIR}} --config ${{env.BUILD_TYPE}}
+
     - id: export
       shell: pwsh
       run: |
@@ -69,7 +85,7 @@ jobs:
         $BINARY_NAME = "${PRODUCT_NAME}.dll"
         $BINARY_PATH = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.BUILD_TYPE}}/${BINARY_NAME}"
         $MARKETING_SUFFIX = "${{inputs.VARIANT}}".ToUpper()
-        $ARTIFACT_NAME = "${{inputs.PRODUCT_NAME}} $MARKETING_SUFFIX"
+        $ARTIFACT_NAME = "${PRODUCT_NAME} $MARKETING_SUFFIX"
 
         echo "::set-output name=PRODUCT_NAME::$PRODUCT_NAME"
         echo "::set-output name=PRODUCT_VERSION::$PRODUCT_VERSION"
