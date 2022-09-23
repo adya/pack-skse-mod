@@ -280,7 +280,7 @@ jobs:
         Write-Info
         Write-Config
 
-        echo "::set-output name=INSTALLER_NAME::$MOD_NAME"
+        echo "::set-output name=INSTALLER_NAME::$MOD_NAME FOMOD Installer"
         echo "::set-output name=INSTALLER_DIR::$INSTALLER_DIR"
         echo "::set-output name=SE_PATH::$INSTALLER_DIR/$SE_PATH"
         echo "::set-output name=AE_PATH::$INSTALLER_DIR/$AE_PATH"
@@ -334,6 +334,7 @@ jobs:
       if: github.ref_type == 'tag'
       uses: svenstaro/upload-release-action@2.3.0
       with:
+        asset_name: "${{ steps.fomod.outputs.INSTALLER_NAME }}"
         file: "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
 
       
