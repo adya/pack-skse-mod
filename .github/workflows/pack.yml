@@ -3,10 +3,11 @@ name: Pack
 on:
   workflow_call:
     inputs:
-      CMAKE_PROJECT_NAME:
+      CMAKE_PROJECT_DIR:
         type: string
-        description: "Name of the project that will be built. This is typically the name of the folder where CMake build products go (e.g. build/PROJECT_NAME/Release/mod.dll)"
-        required: true
+        description: "Path to a directory relative to CMake's BINARY_DIR (e.g. build/CMAKE_PROJECT_DIR/Release/mod.dll)"
+        required: false
+        default: ''
       CMAKE_BINARY_NAME:
         type: string
         description: "Name of the of the built binary. When CMAKE_BINARY_NAME is set it takes precedence over CMAKE_BINARY_NAME_VAR."
@@ -31,16 +32,16 @@ on:
         type: string
         description: "Name of the preset declared in CMakePresets that configures project to build SE variant."
         required: false
-        default: 'githubci-se'
+        default: 'vs2022-windows-vcpkg-se'
       CMAKE_SE_BINARY_DIR:
         type: string
         required: false
-        default: "buildse"
+        default: "build"
       CMAKE_AE_PRESET:
         type: string
         description: "Name of the preset declared in CMakePresets that configures project to build AE variant."
         required: false
-        default: 'githubci-ae'
+        default: 'vs2022-windows-vcpkg-ae'
       CMAKE_AE_BINARY_DIR:
         type: string
         required: false
@@ -49,7 +50,7 @@ on:
         type: string
         description: "Name of the preset declared in CMakePresets that configures project to build VR variant."
         required: false
-        default: 'githubci-vr'
+        default: 'vs2022-windows-vcpkg-vr'
       CMAKE_VR_BINARY_DIR:
         type: string
         required: false
@@ -69,7 +70,7 @@ on:
         default: ''
       FOMOD_REQUIRED_PATH:
         type: string
-        description: "Path to the folder containing files that should always be installed. This path is relative to Installer's root."
+        description: "Path to the folder containing files that should always be installed. This path is relative to FOMOD Installer's root."
         required: false
         default: 'SKSE/Plugins'
       FOMOD_DST_PATH:
@@ -180,7 +181,7 @@ jobs:
     if: ${{ needs.prepare.outputs.HAS_SE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
-      PROJECT_NAME: ${{ inputs.CMAKE_PROJECT_NAME }}
+      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_PRESET: ${{ inputs.CMAKE_SE_PRESET }}
       BINARY_DIR: ${{ inputs.CMAKE_SE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
@@ -194,7 +195,7 @@ jobs:
     if:  ${{ needs.prepare.outputs.HAS_AE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
-      PROJECT_NAME: ${{ inputs.CMAKE_PROJECT_NAME }}
+      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_PRESET: ${{ inputs.CMAKE_AE_PRESET }}
       BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
@@ -208,7 +209,7 @@ jobs:
     if:  ${{ needs.prepare.outputs.HAS_VR == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
-      PROJECT_NAME: ${{ inputs.CMAKE_PROJECT_NAME }}
+      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_PRESET: ${{ inputs.CMAKE_VR_PRESET }}
       BINARY_DIR: ${{ inputs.CMAKE_VR_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
