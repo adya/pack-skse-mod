@@ -272,7 +272,7 @@ jobs:
 
   publish:
     needs: fomod
-    if: ${{ github.ref_type == 'tag' }}
+    if: always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) && github.ref_type == 'tag'
     uses: ./.github/workflows/publish.yml
     with:
       INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}
