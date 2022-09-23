@@ -3,9 +3,31 @@ name: Build variant
 on:
   workflow_call:
     inputs:
-      PROJECT_NAME:
+      CMAKE_PROJECT_DIR:
         type: string
         required: true
+      CMAKE_CONFIG_PRESET:
+        type: string
+        required: true
+      CMAKE_BUILD_PRESET:
+        type: string
+        required: true
+      BINARY_DIR:
+        type: string
+        required: true
+      BINARY_NAME:
+        type: string
+        required: true
+      BINARY_NAME_VAR:
+        type: string
+        required: true
+      BINARY_VERSION:
+        type: string
+        required: true
+      BINARY_VERSION_VAR:
+        type: string
+        required: true
+      
       VARIANT:
         type: string
         required: true
@@ -21,13 +43,11 @@ on:
 
 env:
   BUILD_TYPE: Release
+  vcpkgCommitId: '01b29f6d8212bc845da64773b18665d682f5ab66'
 
 jobs:
   build:
     runs-on: windows-latest
-    env:
-      BUILD_DIR: ${{github.workspace}}/build${{inputs.VARIANT}}
-      CMAKE_PRESET: githubci-${{inputs.VARIANT}}
     outputs:
       ARTIFACT_NAME: ${{ steps.export.outputs.ARTIFACT_NAME }}
       BINARY_NAME: ${{ steps.export.outputs.BINARY_NAME }}
@@ -37,23 +57,36 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        submodules: recursive 
-    
-    - name: Configure CMake
-      run: cmake --preset ${{env.CMAKE_PRESET}}
+        submodules: recursive
+    - uses: lukka/get-cmake@latest
+    - name: Restore artifacts, or setup vcpkg (do not install any package)
+      uses: lukka/run-vcpkg@v10
+      id: runvcpkg
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
+        vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
+        vcpkgJsonGlob: '${{inputs.CMAKE_PROJECT_DIR}}/vcpkg.json'
 
-    - name: Build
-      run: cmake --build ${{env.BUILD_DIR}} --config ${{env.BUILD_TYPE}}
+    - name: Run CMake with build config
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: ${{inputs.CMAKE_CONFIG_PRESET}}
+        buildPreset: ${{inputs.CMAKE_BUILD_PRESET}}
     
+    - name: Run CMake build for older presets
+      if: inputs.CMAKE_BUILD_PRESET == ''
+      shell: pwsh
+      run: cmake --build ${{inputs.BINARY_DIR}} --config ${{env.BUILD_TYPE}}
+
     - id: export
       shell: pwsh
       run: |
-        $PRODUCT_NAME = cmake -L -N ${{env.BUILD_DIR}} | grep NAME | %{$_ -replace "NAME:STRING=",""}
-        $PRODUCT_VERSION = cmake -L -N ${{env.BUILD_DIR}} | grep ^VERSION | %{$_ -replace "VERSION:STRING=",""}
+        $PRODUCT_NAME = If (![string]::IsNullOrEmpty("${{inputs.BINARY_NAME}}")) {"${{inputs.BINARY_NAME}}"} Else { cmake -L -N ${{inputs.BINARY_DIR}} | grep "${{inputs.BINARY_NAME_VAR}}" | %{$_ -replace "${{inputs.BINARY_NAME_VAR}}:STRING=",""} }
+        $PRODUCT_VERSION = If (![string]::IsNullOrEmpty("${{inputs.BINARY_VERSION}}")) {"${{inputs.BINARY_VERSION}}"} Else { cmake -L -N ${{inputs.BINARY_DIR}} | grep "^${{inputs.BINARY_VERSION_VAR}}" | %{$_ -replace "${{inputs.BINARY_VERSION_VAR}}:STRING=",""} }
         $BINARY_NAME = "${PRODUCT_NAME}.dll"
-        $BINARY_PATH = "${{env.BUILD_DIR}}/${{inputs.PROJECT_NAME}}/${{env.BUILD_TYPE}}/${BINARY_NAME}"
+        $BINARY_PATH = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.BUILD_TYPE}}/${BINARY_NAME}"
         $MARKETING_SUFFIX = "${{inputs.VARIANT}}".ToUpper()
-        $ARTIFACT_NAME = "${{inputs.PROJECT_NAME}} $MARKETING_SUFFIX"
+        $ARTIFACT_NAME = "${PRODUCT_NAME} $MARKETING_SUFFIX"
 
         echo "::set-output name=PRODUCT_NAME::$PRODUCT_NAME"
         echo "::set-output name=PRODUCT_VERSION::$PRODUCT_VERSION"

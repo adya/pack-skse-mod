@@ -1,0 +1,20 @@
+name: Publish Mod
+
+on:
+  workflow_call:
+    inputs:
+      INSTALLER_NAME:
+        type: string
+jobs:
+  github:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{inputs.INSTALLER_NAME}}
+
+    - name: Publish GitHub Release
+      uses: svenstaro/upload-release-action@2.3.0
+      with:
+        asset_name: "${{ inputs.INSTALLER_NAME }}.zip"
+        file: "${{ inputs.INSTALLER_NAME }}"

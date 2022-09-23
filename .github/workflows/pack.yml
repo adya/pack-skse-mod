@@ -3,86 +3,149 @@ name: Pack
 on:
   workflow_call:
     inputs:
-      PROJECT_NAME:
+      CMAKE_PROJECT_DIR:
         type: string
-        description: "Name of the project that will be built. This is typically the name of the folder where CMake build products go (e.g. build/PROJECT_NAME/Release/mod.dll)"
-        required: true
+        description: "Path to a directory relative to CMake's BINARY_DIR (e.g. build/CMAKE_PROJECT_DIR/Release/mod.dll)"
+        required: false
+        default: ''
+      CMAKE_BINARY_NAME:
+        type: string
+        description: "Name of the of the built binary. When CMAKE_BINARY_NAME is set it takes precedence over CMAKE_BINARY_NAME_VAR."
+        required: false
+        default: ''
+      CMAKE_BINARY_NAME_VAR:
+        type: string
+        description: "Name of the CMake variable that contains name of the built binary. Note that this variable must be CACHE variable."
+        required: false
+        default: "NAME"
+      CMAKE_BINARY_VERSION:
+        type: string
+        description: "Version of the of the built binary. When CMAKE_BINARY_VERSION is set it takes precedence over CMAKE_SE_PRESET."
+        required: false
+        default: ''
+      CMAKE_BINARY_VERSION_VAR:
+        type: string
+        description: "Name of the CMake variable that contains version of the built binary. Note that this variable must be CACHE variable."
+        required: false
+        default: "VERSION"
+      CMAKE_SE_CONFIG_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to use to generate the project files for SE variant."
+        required: false
+        default: 'vs2022-windows-vcpkg-se'
+      CMAKE_SE_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to build the project for SE variant."
+        required: false
+        default: ''
+      CMAKE_SE_BINARY_DIR:
+        type: string
+        required: false
+        default: "build"
+      CMAKE_AE_CONFIG_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to use to generate the project files for AE variant."
+        required: false
+        default: 'vs2022-windows-vcpkg-ae'
+      CMAKE_AE_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to build the project for AE variant."
+        required: false
+        default: ''
+      CMAKE_AE_BINARY_DIR:
+        type: string
+        required: false
+        default: "buildae"
+      CMAKE_VR_CONFIG_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to use to generate the project files for VR variant."
+        required: false
+        default: 'vs2022-windows-vcpkg-vr'
+      CMAKE_VR_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json's configuration to build the project for VR variant."
+        required: false
+        default: ''
+      CMAKE_VR_BINARY_DIR:
+        type: string
+        required: false
+        default: "buildvr"
       FOMOD_MOD_NAME:
         type: string
-        description: "Name of the mod that will be displayed in FOMOD Installer"
+        description: "Name of the mod that will be displayed in FOMOD Installer."
         required: true
       FOMOD_MOD_AUTHOR:
         type: string
-        description: "Author of the mod that will be displayed in FOMOD Installer's metadata"
+        description: "Author of the mod that will be displayed in FOMOD Installer's metadata."
         required: true
       FOMOD_MOD_NEXUS_ID:
         type: string
         required: false
-        description: "Id of the mod page on Nexus that will be displayed in FOMOD Installer's metadata"
+        description: "Id of the mod page on Nexus that will be displayed in FOMOD Installer's metadata."
         default: ''
       FOMOD_REQUIRED_PATH:
         type: string
-        description: "Path to the folder containing files that should always be installed. This path is relative to Installer's root."
+        description: "Path to the folder containing files that should always be installed. This path is relative to FOMOD Installer's root."
         required: false
         default: 'SKSE/Plugins'
       FOMOD_DST_PATH:
         type: string
-        description: "Path to the installation directory where FOMOD will install files. This is typically Data/SKSE/Plugins"
+        description: "Path to the installation directory where FOMOD will install files. This is typically Data/SKSE/Plugins."
         required: false
         default: 'Data/SKSE/Plugins'
       FOMOD_TITLE:
         type: string
-        description: "Title of the installation page in FOMOD Installer (displayed under the mod's name)"
+        description: "Title of the installation page in FOMOD Installer (displayed under the mod's name)."
         required: false
         default: 'Main'
       FOMOD_GROUP_NAME:
         type: string
-        description: "Title of the group with installation options"
+        description: "Title of the group with installation options."
         required: false
         default: 'DLL'
       FOMOD_SE_PATH:
         type: string
-        description: "Path to SE binaries relative to FOMOD Installer's root"
+        description: "Path to SE binaries relative to FOMOD Installer's root."
         required: false
         default: 'SE/SKSE/Plugins'
       FOMOD_SE_NAME:
         type: string
-        description: "Name of the SE installation option"
+        description: "Name of the SE installation option."
         required: false
         default: 'SSE v1.5.97 ("Special Edition")'
       FOMOD_SE_DESCR:
         type: string
-        description: "Description of the SE installation option"
+        description: "Description of the SE installation option."
         required: false
         default: 'Select this if you are using Skyrim Special Edition (SkyrimSE.exe) v1.5.97.'
       FOMOD_AE_PATH:
         type: string
-        description: "Path to AE binaries relative to FOMOD Installer's root"
+        description: "Path to AE binaries relative to FOMOD Installer's root."
         required: false
         default: 'AE/SKSE/Plugins'
       FOMOD_AE_NAME:
         type: string
-        description: "Name of the AE installation option"
+        description: "Name of the AE installation option."
         required: false
         default: 'SSE v1.6+ ("Anniversary Edition")'
       FOMOD_AE_DESCR:
         type: string
-        description: "Description of the AE installation option"
+        description: "Description of the AE installation option."
         required: false
         default: 'Select this if you are using Skyrim Special Edition (SkyrimSE.exe) v1.6 or higher.'
       FOMOD_VR_PATH:
         type: string
-        description: "Path to VR binaries relative to FOMOD Installer's root"
+        description: "Path to VR binaries relative to FOMOD Installer's root."
         required: false
         default: 'VR/SKSE/Plugins'
       FOMOD_VR_NAME:
         type: string
-        description: "Name of the VR installation option"
+        description: "Name of the VR installation option."
         required: false
         default: 'VR v1.4.15 ("Skyrim VR")'
       FOMOD_VR_DESCR:
         type: string
-        description: "Description of the VR installation option"
+        description: "Description of the VR installation option."
         required: false
         default: 'Select this if you are using Skyrim VR (SkyrimVR.exe) v1.4.15.'
 
@@ -103,9 +166,15 @@ jobs:
         shell: pwsh
         run: |
           $LIST = cmake --list-presets
-          $HAS_SE = %{$LIST} | Select-String -Pattern "githubci-se" -Quiet
-          $HAS_AE = %{$LIST} | Select-String -Pattern "githubci-ae" -Quiet
-          $HAS_VR = %{$LIST} | Select-String -Pattern "githubci-vr" -Quiet
+          $HAS_SE_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet
+          $HAS_AE_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet
+          $HAS_VR_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet
+          $HAS_SE_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_SE_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_AE_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_AE_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_VR_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_VR_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_SE = $HAS_SE_CONFIG -and $HAS_SE_BUILD
+          $HAS_AE = $HAS_AE_CONFIG -and $HAS_AE_BUILD
+          $HAS_VR = $HAS_VR_CONFIG -and $HAS_VR_BUILD
           if ($HAS_SE) {
             echo "SE Variant: ✅"
             echo "::set-output name=HAS_SE::true"
@@ -133,7 +202,14 @@ jobs:
     if: ${{ needs.prepare.outputs.HAS_SE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
-      PROJECT_NAME: ${{ inputs.PROJECT_NAME }}
+      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
+      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_SE_CONFIG_PRESET }}
+      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_SE_BUILD_PRESET }}
+      BINARY_DIR: ${{ inputs.CMAKE_SE_BINARY_DIR }}
+      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
+      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
+      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
+      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "se"
     
   ae:
@@ -141,7 +217,14 @@ jobs:
     if:  ${{ needs.prepare.outputs.HAS_AE == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
-      PROJECT_NAME: ${{ inputs.PROJECT_NAME }}
+      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
+      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
+      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
+      BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
+      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
+      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
+      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
+      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "ae"
 
   vr:
@@ -149,12 +232,19 @@ jobs:
     if:  ${{ needs.prepare.outputs.HAS_VR == 'true' }}
     uses: ./.github/workflows/build-variant.yml
     with:
-      PROJECT_NAME: ${{ inputs.PROJECT_NAME }}
+      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
+      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_VR_CONFIG_PRESET }}
+      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_VR_BUILD_PRESET }}
+      BINARY_DIR: ${{ inputs.CMAKE_VR_BINARY_DIR }}
+      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
+      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
+      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
+      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "vr"
 
   fomod:
     needs: [prepare, se, ae, vr]
-    if:  ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
+    if: always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure'))
     uses: ./.github/workflows/make-fomod.yml
     with:
       MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
@@ -179,3 +269,10 @@ jobs:
       VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
       VR_VERSION: ${{ needs.vr.outputs.PRODICT_VERSION }}
       VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
+
+  publish:
+    needs: fomod
+    if: ${{ github.ref_type == 'tag' }}
+    uses: ./.github/workflows/publish.yml
+    with:
+      INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}
