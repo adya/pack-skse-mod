@@ -269,10 +269,10 @@ jobs:
       VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
       VR_VERSION: ${{ needs.vr.outputs.PRODICT_VERSION }}
       VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
-  
+
   publish:
-    needs: [fomod]
-    if: github.ref_type == 'tag'
+    needs: fomod
+    if: ${{ github.ref_type == 'tag' }}
     uses: ./.github/workflows/publish.yml
     with:
       INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}

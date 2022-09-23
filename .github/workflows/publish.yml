@@ -1,4 +1,4 @@
-name: Publish
+name: Publish Mod
 
 on:
   workflow_call:
@@ -18,5 +18,3 @@ jobs:
       with:
         asset_name: "${{ inputs.INSTALLER_NAME }}.zip"
         file: "${{ inputs.INSTALLER_NAME }}"
-
-      
