@@ -12,9 +12,20 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         name: ${{inputs.INSTALLER_NAME}}
+        path: ${{inputs.INSTALLER_NAME}}
+
+    - name: "Contents of downloaded artifacts"
+      run: dir
+
+    - name: zip
+      shell: pwsh
+      run: Compress-Archive -Path "${{inputs.INSTALLER_NAME}}" -DestinationPath "${{inputs.INSTALLER_NAME}}.zip"
+
+    - name: "Contents of zipped artifacts"
+      run: dir
 
     - name: Publish GitHub Release
       uses: svenstaro/upload-release-action@2.3.0
       with:
         asset_name: "${{ inputs.INSTALLER_NAME }}.zip"
-        file: "${{ inputs.INSTALLER_NAME }}.zip"
+        file: "${{ github.workspace }}/${{ inputs.INSTALLER_NAME }}.zip"
