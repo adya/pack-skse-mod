@@ -26,8 +26,7 @@ on:
         required: true
       BINARY_VERSION_VAR:
         type: string
-        required: true
-      
+        required: true     
       VARIANT:
         type: string
         required: true
@@ -67,46 +66,46 @@ jobs:
       with:
         vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPG_COMMIT_ID }}'
-        vcpkgJsonGlob: '${{inputs.CMAKE_PROJECT_DIR}}/vcpkg.json'
+        vcpkgJsonGlob: './${{inputs.CMAKE_PROJECT_DIR}}/vcpkg.json'
 
     # There is no easy way to loop through all submodules in GitHub Actions to call actions/cache on each submodule separately, so for now it will support only CommonLib.
     - name: Cache submodules
       id: clib-sha
       shell: pwsh
       run: |
+        # Works for SE/AE variants
         $CLibSSESHA = git submodule | Select-String -Pattern ${{ env.COMMON_LIB_SSE_NAME }} | %{[string]$_} | %{$_.Split(" ")[1]}
         $CLibVRSHA = git submodule | Select-String -Pattern ${{ env.COMMON_LIB_VR_NAME }} | %{[string]$_} | %{$_.Split(" ")[1]}
-        $CLibSSEPath = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.COMMON_LIB_SSE_NAME}}"
-        $CLibVRPath = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.COMMON_LIB_VR_NAME}}"
-
-        If (![string]::IsNullOrEmpty($CLibSSESHA)) {
-          echo "Caching ${{env.COMMON_LIB_SSE_NAME}} at $CLibSSEPath"
-          New-Item $CLibSSEPath -ItemType Directory -Force | Out-Null
+        
+        If (![string]::IsNullOrEmpty($CLibSSESHA) -and ('${{inputs.VARIANT}}' -ne 'vr')) {
+          $CLibPath = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.COMMON_LIB_SSE_NAME}}"
+          echo "Caching ${{env.COMMON_LIB_SSE_NAME}} at $CLibPath"
+          New-Item $CLibPath -ItemType Directory -Force | Out-Null
+          echo "::set-output name=CommonLib_SHA::$CLibSSESHA"
+          echo "::set-output name=CommonLib_PATH::$CLibPath"
         }
 
-        If (![string]::IsNullOrEmpty($CLibVRSHA)) {
-          echo "Caching ${{env.COMMON_LIB_VR_NAME}} at $CLibVRPath"
-          New-Item $CLibVRPath -ItemType Directory -Force | Out-Null
+        If (![string]::IsNullOrEmpty($CLibVRSHA) -and ('${{inputs.VARIANT}}' -eq 'vr')) {
+          $CLibPath = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.COMMON_LIB_VR_NAME}}"
+          echo "Caching ${{env.COMMON_LIB_VR_NAME}} at $CLibPath"
+          New-Item $CLibPath -ItemType Directory -Force | Out-Null
+          echo "::set-output name=CommonLib_SHA::$CLibVRSHA"
+          echo "::set-output name=CommonLib_PATH::$CLibPath"
         }
-
-        echo "::set-output name=SSE_SHA::$CLibSSESHA"
-        echo "::set-output name=VR_SHA::$CLibVRSHA"
-        echo "::set-output name=SSE_PATH::$CLibSSEPath"
-        echo "::set-output name=VR_PATH::$CLibVRPath"
 
     - name: Cache CommonLibSSE
       uses: actions/cache@v3
-      if: steps.clib-sha.outputs.SSE_SHA != ''
+      if: steps.clib-sha.outputs.CommonLib_SHA != '' && inputs.VARIANT != 'vr'
       with:
-        path: ${{steps.clib-sha.outputs.SSE_PATH}}
-        key: ${{runner.os}}-${{env.COMMON_LIB_SSE_NAME}}-${{inputs.VARIANT}}-${{steps.clib-sha.outputs.SSE_SHA}}
+        path: ${{steps.clib-sha.outputs.CommonLib_PATH}}
+        key: ${{runner.os}}-${{env.COMMON_LIB_SSE_NAME}}-${{inputs.VARIANT}}-${{steps.clib-sha.outputs.CommonLib_SHA}}
 
     - name: Cache CommonLibVR
       uses: actions/cache@v3
-      if: steps.clib-sha.outputs.VR_SHA != ''
+      if: steps.clib-sha.outputs.CommonLib_SHA != '' && inputs.VARIANT == 'vr'
       with:
-        path: ${{steps.clib-sha.outputs.VR_PATH}}
-        key: ${{runner.os}}-${{env.COMMON_LIB_VR_NAME}}-${{inputs.VARIANT}}-${{steps.clib-sha.outputs.VR_SHA}}      
+        path: ${{steps.clib-sha.outputs.CommonLib_PATH}}
+        key: ${{runner.os}}-${{env.COMMON_LIB_VR_NAME}}-${{inputs.VARIANT}}-${{steps.clib-sha.outputs.CommonLib_SHA}}      
 
     - name: Configure CMake
       shell: pwsh
