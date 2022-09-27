@@ -64,6 +64,7 @@ jobs:
       with:
         ref: ${{inputs.GIT_BRANCH}}
         submodules: recursive
+        fetch-depth: 0
     
     - name: Use CommonLib 1.6.353
       if: inputs.GIT_COMMON_LIB_BRANCH != ''
@@ -71,10 +72,10 @@ jobs:
       run: |
         $CLibSSEName = git submodule | Select-String -Pattern ${{ env.COMMON_LIB_SSE_NAME }} | %{[string]$_} | %{$_.Split(" ")[2]}
         If ([string]::IsNullOrEmpty($CLibSSEName)) { return }
-
-        git submodule foreach git pull
-        git submodule set-branch --branch ${{inputs.GIT_COMMON_LIB_BRANCH}} -- $CLibSSEName
-        git submodule update --remote -- $CLibSSEName
+        
+        cd "$CLibSSEName"
+        git fetch
+        git checkout ${{inputs.GIT_COMMON_LIB_BRANCH}}
 
     - name: Restore artifacts, or setup vcpkg (do not install any package)
       uses: lukka/run-vcpkg@v10
