@@ -66,13 +66,14 @@ jobs:
         submodules: recursive
     
     - name: Use CommonLib 1.6.353
-      if: inputs.COMMON_LIB_BRANCH != ''
+      if: inputs.GIT_COMMON_LIB_BRANCH != ''
       shell: pwsh
       run: |
         $CLibSSEName = git submodule | Select-String -Pattern ${{ env.COMMON_LIB_SSE_NAME }} | %{[string]$_} | %{$_.Split(" ")[2]}
         If ([string]::IsNullOrEmpty($CLibSSEName)) { return }
 
-        git submodule set-branch --branch ${{inputs.COMMON_LIB_BRANCH}} -- $CLibSSEName
+        git submodule foreach git pull
+        git submodule set-branch --branch ${{inputs.GIT_COMMON_LIB_BRANCH}} -- $CLibSSEName
         git submodule update --remote -- $CLibSSEName
 
     - name: Restore artifacts, or setup vcpkg (do not install any package)

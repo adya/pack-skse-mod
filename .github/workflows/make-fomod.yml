@@ -25,15 +25,31 @@ on:
         type: string
       SE_DESCR:
         type: string
+      SE_MIN_GAME_VERSION:
+        type: string
       SE_VERSION:
         type: string
       SE_ARTIFACT:
+        type: string
+      AE353_PATH:
+        type: string
+      AE353_NAME:
+        type: string
+      AE353_DESCR:
+        type: string
+      AE353_MIN_GAME_VERSION:
+        type: string
+      AE353_VERSION:
+        type: string
+      AE353_ARTIFACT:
         type: string
       AE_PATH:
         type: string
       AE_NAME:
         type: string
       AE_DESCR:
+        type: string
+      AE_MIN_GAME_VERSION:
         type: string
       AE_VERSION:
         type: string
@@ -44,6 +60,8 @@ on:
       VR_NAME:
         type: string
       VR_DESCR:
+        type: string
+      VR_MIN_GAME_VERSION:
         type: string
       VR_VERSION:
         type: string
@@ -67,12 +85,9 @@ jobs:
       id: fomod
       shell: pwsh
       run: |
-        $HAS_SE = ![string]::IsNullOrEmpty("${{inputs.SE_ARTIFACT}}")
-        $HAS_AE = ![string]::IsNullOrEmpty("${{inputs.AE_ARTIFACT}}")
-        $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.VR_ARTIFACT}}")
 
         # Get the first available version (defaults to 1.0.0 if no versions found)
-        $versions = "${{inputs.SE_VERSION}}","${{inputs.AE_VERSION}}","${{inputs.VR_VERSION}}","1.0.0"
+        $versions = "${{inputs.SE_VERSION}}","${{inputs.AE_VERSION}}","${{inputs.AE353_VERSION}}","${{inputs.VR_VERSION}}","1.0.0"
         $MOD_VERSION = $versions | Where{$_ -ne ""} | Select-Object -first 1
 
         $MOD_NAME = "${{inputs.MOD_NAME}}"
@@ -83,22 +98,40 @@ jobs:
         $DST_PATH = "${{inputs.DST_PATH}}"
         $TITLE = "${{inputs.TITLE}}"
         $GROUP_NAME = "${{inputs.GROUP_NAME}}"
-        $SE_PATH = '${{inputs.SE_PATH}}'
-        $SE_NAME = '${{inputs.SE_NAME}}'
-        $SE_DESCR = '${{inputs.SE_DESCR}}'
-        $AE_PATH = '${{inputs.AE_PATH}}'
-        $AE_NAME = '${{inputs.AE_NAME}}'
-        $AE_DESCR = '${{inputs.AE_DESCR}}'
-        $VR_PATH = '${{inputs.VR_PATH}}'
-        $VR_NAME = '${{inputs.VR_NAME}}'
-        $VR_DESCR = '${{inputs.VR_DESCR}}'
-        
+               
         # "Private" vars. You shouldn't change it
         $INSTALLER_DIR = "$PWD/${{env.INSTALLER_DIR}}"
         $FOMOD_DIR = "$INSTALLER_DIR/fomod"
         $MOD_CONFIG_PATH = "$FOMOD_DIR/ModuleConfig.xml"
         $MOD_INFO_PATH = "$FOMOD_DIR/info.xml"
         $MOD_NEXUS_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/$MOD_NEXUS_ID"
+
+        # Creates a usable objects that hold information about variants
+        function Create-Variant-Info {
+          [CmdletBinding()]
+          param (
+            [string] $Name,
+            [string] $Path,
+            [string] $Description,
+            [string] $GameVersion,
+            [string] $Artifact
+          )
+          return [PSCustomObject]@{
+            Name = $Name
+            Path = $Path
+            Description = $Description
+            GameVersion = $GameVersion
+            Artifact = $Artifact
+            IsDetecetd = ![string]::IsNullOrEmpty($Artifact)
+          }
+        }
+
+        $Variants = @(
+          Create-Variant-Info "${{inputs.VR_NAME}}" "${{inputs.VR_PATH}}" "${{inputs.VR_DESCR}}" "${{inputs.VR_MIN_GAME_VERSION}}" "${{inputs.VR_ARTIFACT}}"
+          Create-Variant-Info "${{inputs.SE_NAME}}" "${{inputs.SE_PATH}}" "${{inputs.SE_DESCR}}" "${{inputs.SE_MIN_GAME_VERSION}}" "${{inputs.SE_ARTIFACT}}"
+          Create-Variant-Info "${{inputs.AE353_NAME}}" "${{inputs.AE353_PATH}}" "${{inputs.AE353_DESCR}}" "${{inputs.AE353_MIN_GAME_VERSION}}" "${{inputs.AE353_ARTIFACT}}"
+          Create-Variant-Info "${{inputs.AE_NAME}}" "${{inputs.AE_PATH}}" "${{inputs.AE_DESCR}}" "${{inputs.AE_MIN_GAME_VERSION}}" "${{inputs.AE_ARTIFACT}}"
+        )
 
         # Writes installation option with given title, desciption and path. Providing auto-select behavior for specified versions.
         function Write-Plugin {
@@ -108,8 +141,7 @@ jobs:
                 [string] $Title,
                 [string] $Descr,
                 [string] $SrcPath,
-                [string] $RecommendedVersion,
-                [string] $OptionalVersion
+                [string] $GameVersion
             )
             
             process {
@@ -129,27 +161,21 @@ jobs:
                             $xmlWriter.WriteAttributeString("name", "Optional")
                         $xmlWriter.WriteEndElement()
                         $xmlWriter.WriteStartElement("patterns")
-                        if (![string]::IsNullOrEmpty($RecommendedVersion)) {
+                        # Write pattern for each version
+                        Foreach ($Variant in $Variants) {
+                            If ($Variant.GameVersion -eq $GameVersion) {
+                                $DepType = "Recommended"
+                            } else {
+                                $DepType = "Optional"
+                            }
                             $xmlWriter.WriteStartElement("pattern")
                                 $xmlWriter.WriteStartElement("dependencies")
                                     $xmlWriter.WriteStartElement("gameDependency")
-                                        $xmlWriter.WriteAttributeString("version", $RecommendedVersion)
+                                        $xmlWriter.WriteAttributeString("version", $Variant.GameVersion)
                                     $xmlWriter.WriteEndElement()
                                 $xmlWriter.WriteEndElement()
                                 $xmlWriter.WriteStartElement("type")
-                                    $xmlWriter.WriteAttributeString("name", "Recommended")
-                                $xmlWriter.WriteEndElement()
-                            $xmlWriter.WriteEndElement()
-                        }
-                        if (![string]::IsNullOrEmpty($OptionalVersion)) {
-                            $xmlWriter.WriteStartElement("pattern")
-                                $xmlWriter.WriteStartElement("dependencies")
-                                    $xmlWriter.WriteStartElement("gameDependency")
-                                        $xmlWriter.WriteAttributeString("version", $OptionalVersion)
-                                    $xmlWriter.WriteEndElement()
-                                $xmlWriter.WriteEndElement()
-                                $xmlWriter.WriteStartElement("type")
-                                    $xmlWriter.WriteAttributeString("name", "Optional")
+                                    $xmlWriter.WriteAttributeString("name", $DepType)
                                 $xmlWriter.WriteEndElement()
                             $xmlWriter.WriteEndElement()
                         }
@@ -160,9 +186,9 @@ jobs:
             }
         }
 
-        if (!$HAS_SE -and !$HAS_AE -and !$HAS_VR) {
+        If (%{$Variants | Where-Object {$_.IsDetected} | %{$_.Count -eq 0}}) {
             echo "No available variants"
-            exit
+            return
         }
 
         function Write-Config {
@@ -194,14 +220,10 @@ jobs:
                                 $xmlWriter.WriteAttributeString("type", "SelectExactlyOne")
                                 $xmlWriter.WriteStartElement("plugins")
                                     $xmlWriter.WriteAttributeString("order", "Explicit")
-                                    if ($HAS_SE) {
-                                        Write-Plugin -xmlWriter $xmlWriter -Title $SE_NAME -Descr $SE_DESCR -SrcPath $SE_PATH -RecommendedVersion "1.5" -OptionalVersion "1.6"
-                                    }
-                                    if ($HAS_AE) {
-                                        Write-Plugin -xmlWriter $xmlWriter -Title $AE_NAME -Descr $AE_DESCR -SrcPath $AE_PATH -RecommendedVersion "1.6"
-                                    }
-                                    if ($HAS_VR) {
-                                        Write-Plugin -xmlWriter $xmlWriter -Title $VR_NAME -Descr $VR_DESCR -SrcPath $VR_PATH -RecommendedVersion "1.4"
+                                    Foreach ($Variant in $Variants) {
+                                        If ($Variant.IsDetecetd) {
+                                            Write-Plugin -xmlWriter $xmlWriter -Title $Variant.Name -Descr $Variant.Description -SrcPath $Variant.Path -GameVersion $Variant.GameVersion
+                                        }
                                     }
                                 $xmlWriter.WriteEndElement()
                             $xmlWriter.WriteEndElement()
@@ -248,35 +270,18 @@ jobs:
           echo "Nexus: $MOD_NEXUS_URL"
         }
 
-        # And populate with available variants
-        if ($HAS_SE) {
-            New-Item "$INSTALLER_DIR/$SE_PATH" -ItemType Directory -Force | Out-Null
-            echo "Adding SE Variant plugin: ✅"
-            echo "Name: $SE_NAME"
-            echo "Description: $SE_DESCR"
-            echo "Path: $SE_PATH"
-        } else {
-            echo "Adding SE Variant plugin: ⬛"
+        Foreach ($Variant in $Variants) {
+            If ($Variant.IsDetecetd) {
+                New-Item "$INSTALLER_DIR/$($Variant.Path)" -ItemType Directory -Force | Out-Null
+                echo "Adding $($Variant.GameVersion) Variant plugin: ✅"
+                echo "Name: $($Variant.Name)"
+                echo "Description: $($Variant.Description)"
+                echo "Path: $($Variant.Path)"
+            } else {
+                echo "Skipped $($Variant.GameVersion) Variant plugin: ⬛"
+            }
         }
-        if ($HAS_AE) {
-            New-Item "$INSTALLER_DIR/$AE_PATH" -ItemType Directory -Force | Out-Null
-         echo "Adding AE Variant plugin: ✅"
-            echo "Name: $AE_NAME"
-            echo "Description: $AE_DESCR"
-            echo "Path: $AE_PATH"
-        } else {
-            echo "Adding AE Variant plugin: ⬛"
-        }
-        if ($HAS_VR) {
-            New-Item "$INSTALLER_DIR/$VR_PATH" -ItemType Directory -Force | Out-Null
-         echo "Adding VR Variant plugin: ✅"
-            echo "Name: $VR_NAME"
-            echo "Description: $VR_DESCR"
-            echo "Path: $VR_PATH"
-        } else {
-            echo "Adding VR Variant plugin: ⬛"
-        }
-
+        
         Write-Info
         Write-Config
 
@@ -292,36 +297,29 @@ jobs:
       with:
         path: ${{env.ARTIFACTS_DIR}}
 
-    - name: Pack dlls
+    - name: Pack SE dll
       shell: pwsh
-      run: |
-        $HAS_SE = ![string]::IsNullOrEmpty("${{ inputs.SE_ARTIFACT }}")
-        $HAS_AE = ![string]::IsNullOrEmpty("${{ inputs.AE_ARTIFACT }}")
-        $HAS_VR = ![string]::IsNullOrEmpty("${{ inputs.VR_ARTIFACT }}")
-        $SE_PATH = "${{ steps.fomod.outputs.SE_PATH }}"
-        $AE_PATH = "${{ steps.fomod.outputs.AE_PATH }}"
-        $VR_PATH = "${{ steps.fomod.outputs.VR_PATH }}"
+      if: (inputs.SE_ARTIFACT != '') && (steps.fomod.outputs.SE_PATH != '')
+      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.SE_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.SE_PATH }}"
 
-        if($HAS_SE) {
-          dir "${{env.ARTIFACTS_DIR}}/${{inputs.SE_ARTIFACT}}/*" | mv -dest "$SE_PATH"
-          echo "Packing SE Variant: ✅ ($SE_PATH)"
-        } else {
-          echo "Packing SE Variant: ⬛"
-        }
-        if($HAS_AE) {
-          dir "${{env.ARTIFACTS_DIR}}/${{inputs.AE_ARTIFACT}}/*" | mv -dest "$AE_PATH"
-          echo "Packing AE Variant: ✅ ($AE_PATH)"
-        } else {
-          echo "Packing AE Variant: ⬛"
-        }
-        if($HAS_VR) {
-          dir "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}/*" | mv -dest "$VR_PATH"
-          echo "Packing VR Variant: ✅ ($VR_PATH)"
-        } else {
-          echo "Packing VR Variant: ⬛"
-        }
-
-        Compress-Archive -Path "${{ steps.fomod.outputs.INSTALLER_DIR }}" -DestinationPath "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
+    - name: Pack AE dll
+      shell: pwsh
+      if: (inputs.AE_ARTIFACT != '') && (steps.fomod.outputs.AE_PATH != '')
+      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.AE_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.AE_PATH }}"
+    
+    - name: Pack AE353 dll
+      shell: pwsh
+      if: (inputs.AE353_ARTIFACT != '') && (steps.fomod.outputs.AE353_PATH != '')
+      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.AE353_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.AE353_PATH }}"
+    
+    - name: Pack VR dll
+      shell: pwsh
+      if: (inputs.VR_ARTIFACT != '') && (steps.fomod.outputs.VR_PATH != '')
+      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.VR_PATH }}"
+        
+    - name: Zip Installer
+      shell: pwsh
+      run: Compress-Archive -Path "${{ steps.fomod.outputs.INSTALLER_DIR }}" -DestinationPath "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3

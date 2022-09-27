@@ -77,7 +77,7 @@ on:
         default: ''
       AE_353_COMMON_LIB_BRANCH:
         type: string
-        description: "Name of the branch in powerof3/CommonLibSSE repo to be used when building AE 1.6.353 variant. This will forcefully update CommonLibSSE submodule to use latest commit of that branch instead. Defaults to dev-1.6.353"
+        description: "Name of the branch in powerof3/CommonLibSSE repo to be used when building AE 1.6.353 variant. This will forcefully update CommonLibSSE submodule to use latest commit of that branch instead."
         required: false
         default: 'dev-1.6.353'
       FOMOD_MOD_NAME:
