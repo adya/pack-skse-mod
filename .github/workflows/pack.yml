@@ -98,6 +98,11 @@ on:
         description: "Path to the folder containing files that should always be installed. This path is relative to FOMOD Installer's root."
         required: false
         default: 'SKSE/Plugins'
+      FOMOD_REQUIRED_DST_PATH:
+        type: string
+        description: "Path to the installation directory where FOMOD will install required files. This path is relative to FOMOD Installer's root."
+        required: false
+        default: 'Data/SKSE/Plugins'
       FOMOD_DST_PATH:
         type: string
         description: "Path to the installation directory where FOMOD will install files. This is typically Data/SKSE/Plugins."
@@ -313,6 +318,7 @@ jobs:
       MOD_AUTHOR: ${{ inputs.FOMOD_MOD_AUTHOR }}
       MOD_NEXUS_ID: ${{ inputs.FOMOD_MOD_NEXUS_ID }}
       REQUIRED_PATH: ${{ inputs.FOMOD_REQUIRED_PATH }}
+      REQUIRED_DST_PATH: $${{ inputs.FOMOD_REQUIRED_DST_PATH }}
       DST_PATH: ${{ inputs.FOMOD_DST_PATH }}
       TITLE: ${{ inputs.FOMOD_TITLE }}
       GROUP_NAME: ${{ inputs.FOMOD_GROUP_NAME }}

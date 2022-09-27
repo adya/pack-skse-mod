@@ -13,6 +13,8 @@ on:
         type: string
       REQUIRED_PATH:
         type: string
+      REQUIRED_DST_PATH:
+        type: string
       DST_PATH:
         type: string
       TITLE:
@@ -95,6 +97,7 @@ jobs:
         $MOD_VERSION = "${{inputs.MOD_VERSION}}"
         $MOD_NEXUS_ID = "${{inputs.MOD_NEXUS_ID}}"
         $REQUIRED_PATH = "${{inputs.REQUIRED_PATH}}"
+        $REQUIRED_DST_PATH = "${{inputs.REQUIRED_DST_PATH}}"
         $DST_PATH = "${{inputs.DST_PATH}}"
         $TITLE = "${{inputs.TITLE}}"
         $GROUP_NAME = "${{inputs.GROUP_NAME}}"
@@ -206,7 +209,7 @@ jobs:
                 $xmlWriter.WriteStartElement("requiredInstallFiles")
                     $xmlWriter.WriteStartElement("folder")
                         $xmlWriter.WriteAttributeString("source", $REQUIRED_PATH)
-                        $xmlWriter.WriteAttributeString("destination", $DST_PATH)
+                        $xmlWriter.WriteAttributeString("destination", $REQUIRED_DST_PATH)
                     $xmlWriter.WriteEndElement()
                 $xmlWriter.WriteEndElement()
                 $xmlWriter.WriteStartElement("installSteps")
