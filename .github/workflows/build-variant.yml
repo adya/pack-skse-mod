@@ -3,6 +3,10 @@ name: Build variant
 on:
   workflow_call:
     inputs:
+      GIT_BRANCH:
+        type: string
+      GIT_COMMON_LIB_BRANCH:
+        type: string
       CMAKE_PROJECT_DIR:
         type: string
         required: true
@@ -58,7 +62,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
+        ref: ${{inputs.GIT_BRANCH}}
         submodules: recursive
+    
+    - name: Use CommonLib 1.6.353
+      if: inputs.COMMON_LIB_BRANCH != ''
+      shell: pwsh
+      run: |
+        $CLibSSEName = git submodule | Select-String -Pattern ${{ env.COMMON_LIB_SSE_NAME }} | %{[string]$_} | %{$_.Split(" ")[2]}
+        If ([string]::IsNullOrEmpty($CLibSSEName)) { return }
+
+        git submodule set-branch --branch ${{inputs.COMMON_LIB_BRANCH}} -- $CLibSSEName
+        git submodule update --remote -- $CLibSSEName
 
     - name: Restore artifacts, or setup vcpkg (do not install any package)
       uses: lukka/run-vcpkg@v10
