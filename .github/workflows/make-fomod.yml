@@ -290,9 +290,10 @@ jobs:
 
         echo "::set-output name=INSTALLER_NAME::$MOD_NAME FOMOD Installer"
         echo "::set-output name=INSTALLER_DIR::$INSTALLER_DIR"
-        echo "::set-output name=SE_PATH::$INSTALLER_DIR/$SE_PATH"
-        echo "::set-output name=AE_PATH::$INSTALLER_DIR/$AE_PATH"
-        echo "::set-output name=VR_PATH::$INSTALLER_DIR/$VR_PATH"
+        echo "::set-output name=SE_PATH::$INSTALLER_DIR/${{inputs.SE_PATH}}"
+        echo "::set-output name=AE_PATH::$INSTALLER_DIR/${{inputs.AE_PATH}}"
+        echo "::set-output name=AE353_PATH::$INSTALLER_DIR/${{inputs.AE353_PATH}}"
+        echo "::set-output name=VR_PATH::$INSTALLER_DIR/${{inputs.VR_PATH}}"
         echo "Created $MOD_NAME ($MOD_VERSION) FOMOD Installer ✅"
         echo "Location: $INSTALLER_DIR"
 
