@@ -198,6 +198,29 @@ on:
         description: "Minimum version of the game that is recognized as VR variant."
         required: false
         default: '1.4.15.0'
+      PUBLISH_GAME_NAME:
+        type: string
+        description: "Name of the game on Nexus the mod corresponds to. This one will be used to auto publish on tags to Nexus"
+        required: false
+        default: 'skyrimspecialedition'
+      PUBLISH_MOD_DESCRIPTION:
+        type: string
+        description: "Description of the file. This is the text displayed right under the file section."
+        required: false
+        default: ''
+      PUBLISH_MOD_CHANGELOG:
+        type: string
+        description: "Changelog that will be associated with this version"
+        required: false
+        default: ''
+    secrets:
+      PUBLISH_NEXUS_API_KEY:
+        required: false
+        description: "Nexus API key to be used when publishing artifact to Nexus"
+      PUBLISH_NEXUS_COOKIE:
+        required: false
+        description: "Cookies for the active Nexus session to be used when publishing artifact to Nexus"
+
 
 jobs:
   prepare:
@@ -349,3 +372,12 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}
+      MOD_NEXUS_ID: ${{ inputs.FOMOD_MOD_NEXUS_ID }}
+      MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
+      MOD_VERSION: ${{ needs.fomod.outputs.MOD_VERSION }}
+      MOD_DESCRIPTION: ${{ inputs.PUBLISH_MOD_DESCRIPTION }}
+      MOD_CHANGELOG: ${{ inputs.PUBLISH_MOD_CHANGELOG }}
+      GAME_NAME: ${{ inputs.PUBLISH_GAME_NAME }}
+    secrets:
+      NEXUS_API_KEY: ${{ secrets.PUBLISH_NEXUS_API_KEY }}
+      NEXUS_COOKIE: ${{ secrets.PUBLISH_NEXUS_COOKIE }}

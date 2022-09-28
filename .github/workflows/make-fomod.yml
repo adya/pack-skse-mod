@@ -7,8 +7,6 @@ on:
         type: string
       MOD_AUTHOR:
         type: string
-      MOD_VERSION:
-        type: string
       MOD_NEXUS_ID:
         type: string
       REQUIRED_PATH:
@@ -72,6 +70,8 @@ on:
     outputs:
       INSTALLER_NAME:
         value: ${{ jobs.make.outputs.INSTALLER_NAME }}
+      MOD_VERSION:
+        value: ${{ jobs.make.outputs.MOD_VERSION }}
 
 env:
   ARTIFACTS_DIR: "artifacts"
@@ -82,6 +82,7 @@ jobs:
     runs-on: windows-latest
     outputs:
       INSTALLER_NAME: ${{ steps.fomod.outputs.INSTALLER_NAME }}
+      MOD_VERSION: ${{ steps.fomod.outputs.MOD_VERSION }}
     steps:
     - name: Create FOMOD 
       id: fomod
@@ -94,7 +95,6 @@ jobs:
 
         $MOD_NAME = "${{inputs.MOD_NAME}}"
         $MOD_AUTHOR = "${{inputs.MOD_AUTHOR}}"
-        $MOD_VERSION = "${{inputs.MOD_VERSION}}"
         $MOD_NEXUS_ID = "${{inputs.MOD_NEXUS_ID}}"
         $REQUIRED_PATH = "${{inputs.REQUIRED_PATH}}"
         $REQUIRED_DST_PATH = "${{inputs.REQUIRED_DST_PATH}}"
@@ -288,6 +288,7 @@ jobs:
         Write-Info
         Write-Config
 
+        echo "::set-output name=MOD_VERSION::$MOD_VERSION"
         echo "::set-output name=INSTALLER_NAME::$MOD_NAME FOMOD Installer"
         echo "::set-output name=INSTALLER_DIR::$INSTALLER_DIR"
         echo "::set-output name=SE_PATH::$INSTALLER_DIR/${{inputs.SE_PATH}}"
