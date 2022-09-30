@@ -123,6 +123,11 @@ on:
         description: "Title of the group with installation options."
         required: false
         default: 'DLL'
+      FOMOD_DEFAULT_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a default cover for all installation options. Ignored for variants that define their own image."
+        required: false
+        default: ''
       FOMOD_SE_PATH:
         type: string
         description: "Path to SE binaries relative to FOMOD Installer's root."
@@ -342,6 +347,7 @@ jobs:
       DST_PATH: ${{ inputs.FOMOD_DST_PATH }}
       TITLE: ${{ inputs.FOMOD_TITLE }}
       GROUP_NAME: ${{ inputs.FOMOD_GROUP_NAME }}
+      DEFAULT_IMAGE: ${{ inputs.FOMOD_DEFAULT_IMAGE }}
       SE_PATH: ${{ inputs.FOMOD_SE_PATH }}
       SE_NAME: ${{ inputs.FOMOD_SE_NAME }}
       SE_DESCR: ${{ inputs.FOMOD_SE_DESCR }}
