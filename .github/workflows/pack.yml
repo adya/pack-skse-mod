@@ -93,16 +93,21 @@ on:
         required: false
         description: "Id of the mod page on Nexus that will be displayed in FOMOD Installer's metadata."
         default: ''
-      FOMOD_REQUIRED_PATH:
+      FOMOD_REQUIRED_INSTALLATION_DIR:
         type: string
-        description: "Path to the folder containing files that should always be installed. This path is relative to FOMOD Installer's root."
+        description: "Path to the directory that contains game files that should always be installed. This path is relative to repository's root."
         required: false
-        default: 'SKSE/Plugins'
+        default: ''
+      FOMOD_REQUIRED_SRC_PATH:
+        type: string
+        description: "Path to the folder in FOMOD installer containing files that should always be installed."
+        required: false
+        default: 'Required'
       FOMOD_REQUIRED_DST_PATH:
         type: string
         description: "Path to the installation directory where FOMOD will install required files. This path is relative to FOMOD Installer's root."
         required: false
-        default: 'Data/SKSE/Plugins'
+        default: 'Data'
       FOMOD_DST_PATH:
         type: string
         description: "Path to the installation directory where FOMOD will install files. This is typically Data/SKSE/Plugins."
@@ -216,15 +221,9 @@ jobs:
         shell: pwsh
         run: |
           $LIST = cmake --list-presets
-          $HAS_SE_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet)
-          $HAS_AE_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet)
-          $HAS_VR_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
-          $HAS_SE_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_BUILD_PRESET}}" -Quiet)
-          $HAS_AE_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_BUILD_PRESET}}" -Quiet)
-          $HAS_VR_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_BUILD_PRESET}}" -Quiet)
-          $HAS_SE = $HAS_SE_CONFIG -and $HAS_SE_BUILD
-          $HAS_AE = $HAS_AE_CONFIG -and $HAS_AE_BUILD
-          $HAS_VR = $HAS_VR_CONFIG -and $HAS_VR_BUILD
+          $HAS_SE = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet)
+          $HAS_AE = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet)
+          $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
           if ($HAS_SE) {
             echo "SE Variant: ✅"
             echo "::set-output name=HAS_SE::true"
@@ -249,7 +248,7 @@ jobs:
 
   se:
     needs: prepare
-    if: ${{ needs.prepare.outputs.HAS_SE == 'true' }}
+    if: needs.prepare.outputs.HAS_SE == 'true'
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
@@ -264,7 +263,7 @@ jobs:
     
   ae:
     needs: prepare
-    if:  ${{ needs.prepare.outputs.HAS_AE == 'true' }}
+    if: needs.prepare.outputs.HAS_AE == 'true'
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
@@ -279,7 +278,7 @@ jobs:
   
   ae353:
     needs: prepare
-    if:  (needs.prepare.outputs.HAS_AE == 'true') && (inputs.AE_353_BRANCH != '')
+    if: (needs.prepare.outputs.HAS_AE == 'true') && (inputs.AE_353_BRANCH != '')
     uses: ./.github/workflows/build-variant.yml
     with:
       GIT_BRANCH: ${{inputs.AE_353_BRANCH}}
@@ -296,7 +295,7 @@ jobs:
 
   vr:
     needs: prepare
-    if:  ${{ needs.prepare.outputs.HAS_VR == 'true' }}
+    if: needs.prepare.outputs.HAS_VR == 'true'
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
@@ -317,8 +316,9 @@ jobs:
       MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
       MOD_AUTHOR: ${{ inputs.FOMOD_MOD_AUTHOR }}
       MOD_NEXUS_ID: ${{ inputs.FOMOD_MOD_NEXUS_ID }}
-      REQUIRED_PATH: ${{ inputs.FOMOD_REQUIRED_PATH }}
-      REQUIRED_DST_PATH: $${{ inputs.FOMOD_REQUIRED_DST_PATH }}
+      REQUIRED_INSTALLATION_DIR: ${{ inputs.FOMOD_REQUIRED_INSTALLATION_DIR }}
+      REQUIRED_SRC_PATH: ${{ inputs.FOMOD_REQUIRED_SRC_PATH }}
+      REQUIRED_DST_PATH: ${{ inputs.FOMOD_REQUIRED_DST_PATH }}
       DST_PATH: ${{ inputs.FOMOD_DST_PATH }}
       TITLE: ${{ inputs.FOMOD_TITLE }}
       GROUP_NAME: ${{ inputs.FOMOD_GROUP_NAME }}

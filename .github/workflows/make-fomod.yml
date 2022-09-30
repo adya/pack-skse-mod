@@ -7,11 +7,11 @@ on:
         type: string
       MOD_AUTHOR:
         type: string
-      MOD_VERSION:
-        type: string
       MOD_NEXUS_ID:
         type: string
-      REQUIRED_PATH:
+      REQUIRED_INSTALLATION_DIR:
+        type: string
+      REQUIRED_SRC_PATH:
         type: string
       REQUIRED_DST_PATH:
         type: string
@@ -83,6 +83,25 @@ jobs:
     outputs:
       INSTALLER_NAME: ${{ steps.fomod.outputs.INSTALLER_NAME }}
     steps:
+
+    # Checkout to get required installation.
+    - uses: actions/checkout@v3
+
+    - name: Check Required Installation
+      id: req-install
+      shell: pwsh
+      run: |
+        $REQUIRED_DIR = "${{ inputs.REQUIRED_INSTALLATION_DIR }}"
+        $HAS_REQUIRED_INSTALL = ![string]::IsNullOrEmpty($REQUIRED_DIR) -and (Test-Path "$REQUIRED_INSTALLATION_DIR/*")
+        $HAS_VALID_SRC = ![string]::IsNullOrEmpty("${{ inputs.REQUIRED_SRC_PATH }}")
+        If ($HAS_REQUIRED_INSTALL -and $HAS_VALID_SRC) {
+            echo "Required installation will be packed ✅"
+            echo "::set-output name=HAS_REQUIRED_INSTALL::true"
+        } else {
+            echo "Required installation is not provided ⬛"
+            echo "::set-output name=HAS_REQUIRED_INSTALL::false"
+        }
+
     - name: Create FOMOD 
       id: fomod
       shell: pwsh
@@ -94,9 +113,10 @@ jobs:
 
         $MOD_NAME = "${{inputs.MOD_NAME}}"
         $MOD_AUTHOR = "${{inputs.MOD_AUTHOR}}"
-        $MOD_VERSION = "${{inputs.MOD_VERSION}}"
         $MOD_NEXUS_ID = "${{inputs.MOD_NEXUS_ID}}"
-        $REQUIRED_PATH = "${{inputs.REQUIRED_PATH}}"
+
+        $HAS_REQUIRED_INSTALL = "${{steps.req-install.outputs.HAS_REQUIRED_INSTALL}}" -eq "true"
+        $REQUIRED_SRC_PATH = "${{inputs.REQUIRED_SRC_PATH}}"
         $REQUIRED_DST_PATH = "${{inputs.REQUIRED_DST_PATH}}"
         $DST_PATH = "${{inputs.DST_PATH}}"
         $TITLE = "${{inputs.TITLE}}"
@@ -206,12 +226,14 @@ jobs:
                 $xmlWriter.WriteAttributeString("xmlns", "xsi", $null, "http://www.w3.org/2001/XMLSchema-instance")
                 $xmlWriter.WriteAttributeString("noNamespaceSchemaLocation", "http://www.w3.org/2001/XMLSchema-instance", "http://qconsulting.ca/fo3/ModConfig5.0.xsd")
                 $xmlWriter.WriteElementString("moduleName", $MOD_NAME)
-                $xmlWriter.WriteStartElement("requiredInstallFiles")
-                    $xmlWriter.WriteStartElement("folder")
-                        $xmlWriter.WriteAttributeString("source", $REQUIRED_PATH)
-                        $xmlWriter.WriteAttributeString("destination", $REQUIRED_DST_PATH)
+                If ($HAS_REQUIRED_INSTALL) {
+                    $xmlWriter.WriteStartElement("requiredInstallFiles")
+                        $xmlWriter.WriteStartElement("folder")
+                            $xmlWriter.WriteAttributeString("source", $REQUIRED_SRC_PATH)
+                            $xmlWriter.WriteAttributeString("destination", $REQUIRED_DST_PATH)
+                        $xmlWriter.WriteEndElement()
                     $xmlWriter.WriteEndElement()
-                $xmlWriter.WriteEndElement()
+                }
                 $xmlWriter.WriteStartElement("installSteps")
                     $xmlWriter.WriteAttributeString("order", "Explicit")
                     $xmlWriter.WriteStartElement("installStep")
@@ -300,6 +322,17 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         path: ${{env.ARTIFACTS_DIR}}
+
+    - name: Pack Required Files
+      shell: pwsh
+      if: steps.req-install.outputs.HAS_REQUIRED_INSTALL == 'true'
+      run: |
+        # Finally we can create the installer
+        $REQUIRED_DIR = "$PWD/${{ inputs.REQUIRED_INSTALLATION_DIR }}"
+        $REQUIRED_SRC = "${{ env.INSTALLER_DIR }}/${{ inputs.REQUIRED_SRC_PATH }}"
+
+        New-Item $REQUIRED_SRC -ItemType Directory -Force | Out-Null
+        dir "$REQUIRED_DIR/*" | mv -dest "$REQUIRED_SRC"
 
     - name: Pack SE dll
       shell: pwsh
