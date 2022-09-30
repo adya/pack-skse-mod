@@ -216,12 +216,12 @@ jobs:
         shell: pwsh
         run: |
           $LIST = cmake --list-presets
-          $HAS_SE_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet
-          $HAS_AE_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet
-          $HAS_VR_CONFIG = %{$LIST} | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet
-          $HAS_SE_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_SE_BUILD_PRESET}}" -Quiet } Else { $true }
-          $HAS_AE_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_AE_BUILD_PRESET}}" -Quiet } Else { $true }
-          $HAS_VR_BUILD = If (![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_BUILD_PRESET}}")) { $LIST | Select-String -Pattern "${{inputs.CMAKE_VR_BUILD_PRESET}}" -Quiet } Else { $true }
+          $HAS_SE_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet)
+          $HAS_AE_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet)
+          $HAS_VR_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
+          $HAS_SE_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_BUILD_PRESET}}" -Quiet)
+          $HAS_AE_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_BUILD_PRESET}}" -Quiet)
+          $HAS_VR_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_BUILD_PRESET}}" -Quiet)
           $HAS_SE = $HAS_SE_CONFIG -and $HAS_SE_BUILD
           $HAS_AE = $HAS_AE_CONFIG -and $HAS_AE_BUILD
           $HAS_VR = $HAS_VR_CONFIG -and $HAS_VR_BUILD
