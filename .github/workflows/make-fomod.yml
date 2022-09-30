@@ -27,6 +27,8 @@ on:
         type: string
       SE_DESCR:
         type: string
+      SE_IMAGE:
+        type: string
       SE_MIN_GAME_VERSION:
         type: string
       SE_VERSION:
@@ -38,6 +40,8 @@ on:
       AE353_NAME:
         type: string
       AE353_DESCR:
+        type: string
+      AE353_IMAGE:
         type: string
       AE353_MIN_GAME_VERSION:
         type: string
@@ -51,6 +55,8 @@ on:
         type: string
       AE_DESCR:
         type: string
+      AE_IMAGE:
+        type: string
       AE_MIN_GAME_VERSION:
         type: string
       AE_VERSION:
@@ -62,6 +68,8 @@ on:
       VR_NAME:
         type: string
       VR_DESCR:
+        type: string
+      VR_IMAGE:
         type: string
       VR_MIN_GAME_VERSION:
         type: string
@@ -125,6 +133,7 @@ jobs:
         # "Private" vars. You shouldn't change it
         $INSTALLER_DIR = "$PWD/${{env.INSTALLER_DIR}}"
         $FOMOD_DIR = "$INSTALLER_DIR/fomod"
+        $IMAGES_DIR = "$FOMOD_DIR/images"
         $MOD_CONFIG_PATH = "$FOMOD_DIR/ModuleConfig.xml"
         $MOD_INFO_PATH = "$FOMOD_DIR/info.xml"
         $MOD_NEXUS_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/$MOD_NEXUS_ID"
@@ -136,6 +145,7 @@ jobs:
             [string] $Name,
             [string] $Path,
             [string] $Description,
+            [string] $Image,
             [string] $GameVersion,
             [string] $Artifact
           )
@@ -143,6 +153,9 @@ jobs:
             Name = $Name
             Path = $Path
             Description = $Description
+            ImageSrc = $Image
+            # ImageDst will be empty if there is no image detected for given variant
+            ImageDst = If (![string]::IsNullOrEmpty($Image) -and (Test-Path "$Image")) { "$IMAGES_DIR/$(Split-Path $Image -Leaf)" } else { "" }
             GameVersion = $GameVersion
             Artifact = $Artifact
             IsDetecetd = ![string]::IsNullOrEmpty($Artifact)
@@ -150,10 +163,10 @@ jobs:
         }
 
         $Variants = @(
-          Create-Variant-Info '${{inputs.VR_NAME}}' '${{inputs.VR_PATH}}' '${{inputs.VR_DESCR}}' '${{inputs.VR_MIN_GAME_VERSION}}' '${{inputs.VR_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.SE_NAME}}' '${{inputs.SE_PATH}}' '${{inputs.SE_DESCR}}' '${{inputs.SE_MIN_GAME_VERSION}}' '${{inputs.SE_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.AE353_NAME}}' '${{inputs.AE353_PATH}}' '${{inputs.AE353_DESCR}}' '${{inputs.AE353_MIN_GAME_VERSION}}' '${{inputs.AE353_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.AE_NAME}}' '${{inputs.AE_PATH}}' '${{inputs.AE_DESCR}}' '${{inputs.AE_MIN_GAME_VERSION}}' '${{inputs.AE_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.VR_NAME}}' '${{inputs.VR_PATH}}' '${{inputs.VR_DESCR}}' '${{inputs.VR_IMAGE}}' '${{inputs.VR_MIN_GAME_VERSION}}' '${{inputs.VR_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.SE_NAME}}' '${{inputs.SE_PATH}}' '${{inputs.SE_DESCR}}' '${{inputs.SE_IMAGE}}' '${{inputs.SE_MIN_GAME_VERSION}}' '${{inputs.SE_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.AE353_NAME}}' '${{inputs.AE353_PATH}}' '${{inputs.AE353_DESCR}}' '${{inputs.AE353_IMAGE}}' '${{inputs.AE353_MIN_GAME_VERSION}}' '${{inputs.AE353_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.AE_NAME}}' '${{inputs.AE_PATH}}' '${{inputs.AE_DESCR}}' '${{inputs.AE_IMAGE}}' '${{inputs.AE_MIN_GAME_VERSION}}' '${{inputs.AE_ARTIFACT}}'
         )
 
         # Writes installation option with given title, desciption and path. Providing auto-select behavior for specified versions.
@@ -163,6 +176,7 @@ jobs:
                 [System.XML.XmlWriter] $xmlWriter,
                 [string] $Title,
                 [string] $Descr,
+                [string] $Image,
                 [string] $SrcPath,
                 [string] $GameVersion
             )
@@ -170,7 +184,14 @@ jobs:
             process {
                 $xmlWriter.WriteStartElement("plugin")
                 $xmlWriter.WriteAttributeString("name", $Title)
-                $xmlWriter.WriteElementString("description", $Descr)
+                If (![string]::IsNullOrEmpty($Descr)) {
+                    $xmlWriter.WriteElementString("description", $Descr)
+                }
+                If (![string]::IsNullOrEmpty($Image)) {
+                  $xmlWriter.WriteStartElement("image")
+                      $xmlWriter.WriteAttributeString("path", "$Image") 
+                  $xmlWriter.WriteEndElement()
+                }
                 $xmlWriter.WriteStartElement("files")
                     $xmlWriter.WriteStartElement("folder")
                         $xmlWriter.WriteAttributeString("source", $SrcPath)
@@ -247,7 +268,7 @@ jobs:
                                     $xmlWriter.WriteAttributeString("order", "Explicit")
                                     Foreach ($Variant in $Variants) {
                                         If ($Variant.IsDetecetd) {
-                                            Write-Plugin -xmlWriter $xmlWriter -Title $Variant.Name -Descr $Variant.Description -SrcPath $Variant.Path -GameVersion $Variant.GameVersion
+                                            Write-Plugin -xmlWriter $xmlWriter -Title $Variant.Name -Descr $Variant.Description -Image $Variant.ImageDst -SrcPath $Variant.Path -GameVersion $Variant.GameVersion
                                         }
                                     }
                                 $xmlWriter.WriteEndElement()
@@ -298,10 +319,17 @@ jobs:
         Foreach ($Variant in $Variants) {
             If ($Variant.IsDetecetd) {
                 New-Item "$INSTALLER_DIR/$($Variant.Path)" -ItemType Directory -Force | Out-Null
+                
                 echo "Adding $($Variant.GameVersion) Variant plugin: ✅"
                 echo "Name: $($Variant.Name)"
                 echo "Description: $($Variant.Description)"
                 echo "Path: $($Variant.Path)"
+                
+                If (![string]::IsNullOrEmpty($Variant.ImageSrc) -and (Test-Path "$($Variant.ImageSrc)")) {
+                    New-Item "$IMAGES_DIR" -ItemType Directory -Force | Out-Null
+                    Copy-Item -Path "$Variant.ImageSrc" -Destination "$Variant.ImageDst"
+                    echo "Image: $($Variant.ImageSrc)"
+                }
             } else {
                 echo "Skipped $($Variant.GameVersion) Variant plugin: ⬛"
             }
@@ -327,7 +355,6 @@ jobs:
       shell: pwsh
       if: steps.req-install.outputs.HAS_REQUIRED_INSTALL == 'true'
       run: |
-        # Finally we can create the installer
         $REQUIRED_DIR = "$PWD/${{ inputs.REQUIRED_INSTALLATION_DIR }}"
         $REQUIRED_SRC = "${{ env.INSTALLER_DIR }}/${{ inputs.REQUIRED_SRC_PATH }}"
 

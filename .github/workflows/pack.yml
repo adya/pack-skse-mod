@@ -138,6 +138,11 @@ on:
         description: "Description of the SE installation option."
         required: false
         default: 'Select this if you are using Skyrim Special Edition v1.5.97.'
+      FOMOD_SE_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for SE installation option."
+        required: false
+        default: ''
       FOMOD_SE_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as SE variant."
@@ -150,14 +155,19 @@ on:
         default: 'AE353/SKSE/Plugins'
       FOMOD_AE353_NAME:
         type: string
-        description: "Name of the AE installation option."
+        description: "Name of the AE .353 installation option."
         required: false
         default: 'SSE v1.6.353 ("Anniversary Edition")'
       FOMOD_AE353_DESCR:
         type: string
-        description: "Description of the AE installation option."
+        description: "Description of the AE .353 installation option."
         required: false
         default: 'Select this if you are using Skyrim Anniversary Edition v1.6.353 or lower.'
+      FOMOD_AE353_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for AE .353 installation option."
+        required: false
+        default: ''
       FOMOD_AE353_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as AE 1.6.353 variant."
@@ -178,6 +188,11 @@ on:
         description: "Description of the AE installation option."
         required: false
         default: 'Select this if you are using Skyrim Anniversary Edition v1.6.629 or higher (latest update).'
+      FOMOD_AE_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for AE installation option."
+        required: false
+        default: ''
       FOMOD_AE_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as AE variant."
@@ -198,6 +213,11 @@ on:
         description: "Description of the VR installation option."
         required: false
         default: 'Select this if you are using Skyrim VR v1.4.15.'
+      FOMOD_VR_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for VR installation option."
+        required: false
+        default: ''
       FOMOD_VR_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as VR variant."
@@ -325,24 +345,28 @@ jobs:
       SE_PATH: ${{ inputs.FOMOD_SE_PATH }}
       SE_NAME: ${{ inputs.FOMOD_SE_NAME }}
       SE_DESCR: ${{ inputs.FOMOD_SE_DESCR }}
+      SE_IMAGE: ${{ inputs.FOMOD_SE_IMAGE }}
       SE_MIN_GAME_VERSION: ${{ inputs.FOMOD_SE_MIN_GAME_VERSION }}
       SE_VERSION: ${{ needs.se.outputs.PRODUCT_VERSION }}
       SE_ARTIFACT: ${{ needs.se.outputs.ARTIFACT_NAME }}
       AE_PATH: ${{ inputs.FOMOD_AE_PATH }}
       AE_NAME: ${{ inputs.FOMOD_AE_NAME }}
       AE_DESCR: ${{ inputs.FOMOD_AE_DESCR }}
+      AE_IMAGE: ${{ inputs.FOMOD_AE_IMAGE }}
       AE_MIN_GAME_VERSION: ${{ inputs.FOMOD_AE_MIN_GAME_VERSION }}
       AE_VERSION: ${{ needs.ae.outputs.PRODUCT_VERSION }}
       AE_ARTIFACT: ${{ needs.ae.outputs.ARTIFACT_NAME }}
       AE353_PATH: ${{ inputs.FOMOD_AE353_PATH }}
       AE353_NAME: ${{ inputs.FOMOD_AE353_NAME }}
       AE353_DESCR: ${{ inputs.FOMOD_AE353_DESCR }}
+      AE353_IMAGE: ${{ inputs.FOMOD_AE353_IMAGE }}
       AE353_MIN_GAME_VERSION: ${{ inputs.FOMOD_AE353_MIN_GAME_VERSION }}
       AE353_VERSION: ${{ needs.ae353.outputs.PRODUCT_VERSION }}
       AE353_ARTIFACT: ${{ needs.ae353.outputs.ARTIFACT_NAME }}
       VR_PATH: ${{ inputs.FOMOD_VR_PATH }}
       VR_NAME: ${{ inputs.FOMOD_VR_NAME }}
       VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
+      VR_IMAGE: ${{ inputs.FOMOD_VR_IMAGE }}
       VR_MIN_GAME_VERSION: ${{ inputs.FOMOD_VR_MIN_GAME_VERSION }}
       VR_VERSION: ${{ needs.vr.outputs.PRODUCT_VERSION }}
       VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
