@@ -7,11 +7,11 @@ on:
         type: string
       MOD_AUTHOR:
         type: string
-      MOD_VERSION:
-        type: string
       MOD_NEXUS_ID:
         type: string
-      REQUIRED_PATH:
+      REQUIRED_INSTALLATION_DIR:
+        type: string
+      REQUIRED_SRC_PATH:
         type: string
       REQUIRED_DST_PATH:
         type: string
@@ -21,11 +21,15 @@ on:
         type: string
       GROUP_NAME:
         type: string
+      DEFAULT_IMAGE:
+        type: string
       SE_PATH:
         type: string
       SE_NAME:
         type: string
       SE_DESCR:
+        type: string
+      SE_IMAGE:
         type: string
       SE_MIN_GAME_VERSION:
         type: string
@@ -39,6 +43,8 @@ on:
         type: string
       AE353_DESCR:
         type: string
+      AE353_IMAGE:
+        type: string
       AE353_MIN_GAME_VERSION:
         type: string
       AE353_VERSION:
@@ -51,6 +57,8 @@ on:
         type: string
       AE_DESCR:
         type: string
+      AE_IMAGE:
+        type: string
       AE_MIN_GAME_VERSION:
         type: string
       AE_VERSION:
@@ -62,6 +70,8 @@ on:
       VR_NAME:
         type: string
       VR_DESCR:
+        type: string
+      VR_IMAGE:
         type: string
       VR_MIN_GAME_VERSION:
         type: string
@@ -83,6 +93,25 @@ jobs:
     outputs:
       INSTALLER_NAME: ${{ steps.fomod.outputs.INSTALLER_NAME }}
     steps:
+
+    # Checkout to get required installation.
+    - uses: actions/checkout@v3
+
+    - name: Check Required Installation
+      id: req-install
+      shell: pwsh
+      run: |
+        $REQUIRED_DIR = "${{ inputs.REQUIRED_INSTALLATION_DIR }}"
+        $HAS_REQUIRED_INSTALL = ![string]::IsNullOrEmpty($REQUIRED_DIR) -and (Test-Path "$REQUIRED_INSTALLATION_DIR/*")
+        $HAS_VALID_SRC = ![string]::IsNullOrEmpty("${{ inputs.REQUIRED_SRC_PATH }}")
+        If ($HAS_REQUIRED_INSTALL -and $HAS_VALID_SRC) {
+            echo "Required installation will be packed ✅"
+            echo "::set-output name=HAS_REQUIRED_INSTALL::true"
+        } else {
+            echo "Required installation is not provided ⬛"
+            echo "::set-output name=HAS_REQUIRED_INSTALL::false"
+        }
+
     - name: Create FOMOD 
       id: fomod
       shell: pwsh
@@ -94,9 +123,11 @@ jobs:
 
         $MOD_NAME = "${{inputs.MOD_NAME}}"
         $MOD_AUTHOR = "${{inputs.MOD_AUTHOR}}"
-        $MOD_VERSION = "${{inputs.MOD_VERSION}}"
         $MOD_NEXUS_ID = "${{inputs.MOD_NEXUS_ID}}"
-        $REQUIRED_PATH = "${{inputs.REQUIRED_PATH}}"
+        $DEFAULT_IMAGE = "${{inputs.DEFAULT_IMAGE}}"
+
+        $HAS_REQUIRED_INSTALL = "${{steps.req-install.outputs.HAS_REQUIRED_INSTALL}}" -eq "true"
+        $REQUIRED_SRC_PATH = "${{inputs.REQUIRED_SRC_PATH}}"
         $REQUIRED_DST_PATH = "${{inputs.REQUIRED_DST_PATH}}"
         $DST_PATH = "${{inputs.DST_PATH}}"
         $TITLE = "${{inputs.TITLE}}"
@@ -105,6 +136,8 @@ jobs:
         # "Private" vars. You shouldn't change it
         $INSTALLER_DIR = "$PWD/${{env.INSTALLER_DIR}}"
         $FOMOD_DIR = "$INSTALLER_DIR/fomod"
+        $IMAGES_DIR = "$FOMOD_DIR/images"
+        $IMAGES_PATH = "fomod/images"
         $MOD_CONFIG_PATH = "$FOMOD_DIR/ModuleConfig.xml"
         $MOD_INFO_PATH = "$FOMOD_DIR/info.xml"
         $MOD_NEXUS_URL = "https://www.nexusmods.com/skyrimspecialedition/mods/$MOD_NEXUS_ID"
@@ -116,24 +149,32 @@ jobs:
             [string] $Name,
             [string] $Path,
             [string] $Description,
+            [string] $Image,
             [string] $GameVersion,
             [string] $Artifact
           )
+
+          $ImageSrc = If (![string]::IsNullOrEmpty($Image)) { $Image } else { $DEFAULT_IMAGE }
+          # ImageDst will be empty if there is no image detected for given variant
+          $ImageDst = If (![string]::IsNullOrEmpty($ImageSrc) -and (Test-Path "$ImageSrc")) { "$IMAGES_PATH/$(Split-Path $ImageSrc -Leaf)" } else { "" }
+          $IsDetected = ![string]::IsNullOrEmpty($Artifact)
           return [PSCustomObject]@{
             Name = $Name
             Path = $Path
             Description = $Description
+            ImageSrc = $ImageSrc
+            ImageDst = $ImageDst
             GameVersion = $GameVersion
             Artifact = $Artifact
-            IsDetecetd = ![string]::IsNullOrEmpty($Artifact)
+            IsDetected = $IsDetected
           }
         }
 
         $Variants = @(
-          Create-Variant-Info '${{inputs.VR_NAME}}' '${{inputs.VR_PATH}}' '${{inputs.VR_DESCR}}' '${{inputs.VR_MIN_GAME_VERSION}}' '${{inputs.VR_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.SE_NAME}}' '${{inputs.SE_PATH}}' '${{inputs.SE_DESCR}}' '${{inputs.SE_MIN_GAME_VERSION}}' '${{inputs.SE_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.AE353_NAME}}' '${{inputs.AE353_PATH}}' '${{inputs.AE353_DESCR}}' '${{inputs.AE353_MIN_GAME_VERSION}}' '${{inputs.AE353_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.AE_NAME}}' '${{inputs.AE_PATH}}' '${{inputs.AE_DESCR}}' '${{inputs.AE_MIN_GAME_VERSION}}' '${{inputs.AE_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.VR_NAME}}' '${{inputs.VR_PATH}}' '${{inputs.VR_DESCR}}' '${{inputs.VR_IMAGE}}' '${{inputs.VR_MIN_GAME_VERSION}}' '${{inputs.VR_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.SE_NAME}}' '${{inputs.SE_PATH}}' '${{inputs.SE_DESCR}}' '${{inputs.SE_IMAGE}}' '${{inputs.SE_MIN_GAME_VERSION}}' '${{inputs.SE_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.AE353_NAME}}' '${{inputs.AE353_PATH}}' '${{inputs.AE353_DESCR}}' '${{inputs.AE353_IMAGE}}' '${{inputs.AE353_MIN_GAME_VERSION}}' '${{inputs.AE353_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.AE_NAME}}' '${{inputs.AE_PATH}}' '${{inputs.AE_DESCR}}' '${{inputs.AE_IMAGE}}' '${{inputs.AE_MIN_GAME_VERSION}}' '${{inputs.AE_ARTIFACT}}'
         )
 
         # Writes installation option with given title, desciption and path. Providing auto-select behavior for specified versions.
@@ -143,6 +184,7 @@ jobs:
                 [System.XML.XmlWriter] $xmlWriter,
                 [string] $Title,
                 [string] $Descr,
+                [string] $Image,
                 [string] $SrcPath,
                 [string] $GameVersion
             )
@@ -150,7 +192,14 @@ jobs:
             process {
                 $xmlWriter.WriteStartElement("plugin")
                 $xmlWriter.WriteAttributeString("name", $Title)
-                $xmlWriter.WriteElementString("description", $Descr)
+                If (![string]::IsNullOrEmpty($Descr)) {
+                    $xmlWriter.WriteElementString("description", $Descr)
+                }
+                If (![string]::IsNullOrEmpty($Image)) {
+                  $xmlWriter.WriteStartElement("image")
+                      $xmlWriter.WriteAttributeString("path", "$Image") 
+                  $xmlWriter.WriteEndElement()
+                }
                 $xmlWriter.WriteStartElement("files")
                     $xmlWriter.WriteStartElement("folder")
                         $xmlWriter.WriteAttributeString("source", $SrcPath)
@@ -189,11 +238,6 @@ jobs:
             }
         }
 
-        If (%{$Variants | Where-Object {$_.IsDetected} | %{$_.Count -eq 0}}) {
-            echo "No available variants"
-            return
-        }
-
         function Write-Config {
           process {
             $xmlSettings = New-Object System.Xml.XmlWriterSettings
@@ -206,12 +250,14 @@ jobs:
                 $xmlWriter.WriteAttributeString("xmlns", "xsi", $null, "http://www.w3.org/2001/XMLSchema-instance")
                 $xmlWriter.WriteAttributeString("noNamespaceSchemaLocation", "http://www.w3.org/2001/XMLSchema-instance", "http://qconsulting.ca/fo3/ModConfig5.0.xsd")
                 $xmlWriter.WriteElementString("moduleName", $MOD_NAME)
-                $xmlWriter.WriteStartElement("requiredInstallFiles")
-                    $xmlWriter.WriteStartElement("folder")
-                        $xmlWriter.WriteAttributeString("source", $REQUIRED_PATH)
-                        $xmlWriter.WriteAttributeString("destination", $REQUIRED_DST_PATH)
+                If ($HAS_REQUIRED_INSTALL) {
+                    $xmlWriter.WriteStartElement("requiredInstallFiles")
+                        $xmlWriter.WriteStartElement("folder")
+                            $xmlWriter.WriteAttributeString("source", $REQUIRED_SRC_PATH)
+                            $xmlWriter.WriteAttributeString("destination", $REQUIRED_DST_PATH)
+                        $xmlWriter.WriteEndElement()
                     $xmlWriter.WriteEndElement()
-                $xmlWriter.WriteEndElement()
+                }
                 $xmlWriter.WriteStartElement("installSteps")
                     $xmlWriter.WriteAttributeString("order", "Explicit")
                     $xmlWriter.WriteStartElement("installStep")
@@ -224,8 +270,8 @@ jobs:
                                 $xmlWriter.WriteStartElement("plugins")
                                     $xmlWriter.WriteAttributeString("order", "Explicit")
                                     Foreach ($Variant in $Variants) {
-                                        If ($Variant.IsDetecetd) {
-                                            Write-Plugin -xmlWriter $xmlWriter -Title $Variant.Name -Descr $Variant.Description -SrcPath $Variant.Path -GameVersion $Variant.GameVersion
+                                        If ($Variant.IsDetected) {
+                                            Write-Plugin -xmlWriter $xmlWriter -Title $Variant.Name -Descr $Variant.Description -Image $Variant.ImageDst -SrcPath $Variant.Path -GameVersion $Variant.GameVersion
                                         }
                                     }
                                 $xmlWriter.WriteEndElement()
@@ -263,8 +309,13 @@ jobs:
             }
         }
 
+        If ($($Variants | Where-Object {$_.IsDetected}).Count -eq 0) {
+            echo "No available variants"
+            return
+        }
+
         # Finally we can create the installer
-        New-Item $FOMOD_DIR -ItemType Directory -Force | Out-Null
+        New-Item $FOMOD_DIR -ItemType Directory -Force
         echo "Creating FOMOD: ✅"
         echo "Name: $MOD_NAME"
         echo "Version: $MOD_VERSION"
@@ -274,12 +325,20 @@ jobs:
         }
 
         Foreach ($Variant in $Variants) {
-            If ($Variant.IsDetecetd) {
-                New-Item "$INSTALLER_DIR/$($Variant.Path)" -ItemType Directory -Force | Out-Null
+            If ($Variant.IsDetected) {
+                New-Item "$INSTALLER_DIR/$($Variant.Path)" -ItemType Directory -Force
+                
                 echo "Adding $($Variant.GameVersion) Variant plugin: ✅"
                 echo "Name: $($Variant.Name)"
                 echo "Description: $($Variant.Description)"
                 echo "Path: $($Variant.Path)"
+                
+                If (![string]::IsNullOrEmpty($Variant.ImageDst) -and ![string]::IsNullOrEmpty($Variant.ImageSrc) -and (Test-Path "$($Variant.ImageSrc)")) {
+                    New-Item "$IMAGES_DIR" -ItemType Directory -Force
+                    echo "Image: $($Variant.ImageDst)"
+                    echo "Image Source: $($Variant.ImageSrc)"
+                    Copy-Item -Path "$($Variant.ImageSrc)" -Destination "$INSTALLER_DIR/$($Variant.ImageDst)" -Force
+                }
             } else {
                 echo "Skipped $($Variant.GameVersion) Variant plugin: ⬛"
             }
@@ -300,6 +359,16 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         path: ${{env.ARTIFACTS_DIR}}
+
+    - name: Pack Required Files
+      shell: pwsh
+      if: steps.req-install.outputs.HAS_REQUIRED_INSTALL == 'true'
+      run: |
+        $REQUIRED_DIR = "$PWD/${{ inputs.REQUIRED_INSTALLATION_DIR }}"
+        $REQUIRED_SRC = "${{ env.INSTALLER_DIR }}/${{ inputs.REQUIRED_SRC_PATH }}"
+
+        New-Item $REQUIRED_SRC -ItemType Directory -Force
+        dir "$REQUIRED_DIR/*" | mv -dest "$REQUIRED_SRC"
 
     - name: Pack SE dll
       shell: pwsh

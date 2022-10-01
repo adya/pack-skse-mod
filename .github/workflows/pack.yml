@@ -93,16 +93,21 @@ on:
         required: false
         description: "Id of the mod page on Nexus that will be displayed in FOMOD Installer's metadata."
         default: ''
-      FOMOD_REQUIRED_PATH:
+      FOMOD_REQUIRED_INSTALLATION_DIR:
         type: string
-        description: "Path to the folder containing files that should always be installed. This path is relative to FOMOD Installer's root."
+        description: "Path to the directory that contains game files that should always be installed. This path is relative to repository's root."
         required: false
-        default: 'SKSE/Plugins'
+        default: ''
+      FOMOD_REQUIRED_SRC_PATH:
+        type: string
+        description: "Path to the folder in FOMOD installer containing files that should always be installed."
+        required: false
+        default: 'Required'
       FOMOD_REQUIRED_DST_PATH:
         type: string
         description: "Path to the installation directory where FOMOD will install required files. This path is relative to FOMOD Installer's root."
         required: false
-        default: 'Data/SKSE/Plugins'
+        default: 'Data'
       FOMOD_DST_PATH:
         type: string
         description: "Path to the installation directory where FOMOD will install files. This is typically Data/SKSE/Plugins."
@@ -118,6 +123,11 @@ on:
         description: "Title of the group with installation options."
         required: false
         default: 'DLL'
+      FOMOD_DEFAULT_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a default cover for all installation options. Ignored for variants that define their own image."
+        required: false
+        default: ''
       FOMOD_SE_PATH:
         type: string
         description: "Path to SE binaries relative to FOMOD Installer's root."
@@ -133,6 +143,11 @@ on:
         description: "Description of the SE installation option."
         required: false
         default: 'Select this if you are using Skyrim Special Edition v1.5.97.'
+      FOMOD_SE_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for SE installation option."
+        required: false
+        default: ''
       FOMOD_SE_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as SE variant."
@@ -145,14 +160,19 @@ on:
         default: 'AE353/SKSE/Plugins'
       FOMOD_AE353_NAME:
         type: string
-        description: "Name of the AE installation option."
+        description: "Name of the AE .353 installation option."
         required: false
         default: 'SSE v1.6.353 ("Anniversary Edition")'
       FOMOD_AE353_DESCR:
         type: string
-        description: "Description of the AE installation option."
+        description: "Description of the AE .353 installation option."
         required: false
         default: 'Select this if you are using Skyrim Anniversary Edition v1.6.353 or lower.'
+      FOMOD_AE353_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for AE .353 installation option."
+        required: false
+        default: ''
       FOMOD_AE353_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as AE 1.6.353 variant."
@@ -173,6 +193,11 @@ on:
         description: "Description of the AE installation option."
         required: false
         default: 'Select this if you are using Skyrim Anniversary Edition v1.6.629 or higher (latest update).'
+      FOMOD_AE_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for AE installation option."
+        required: false
+        default: ''
       FOMOD_AE_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as AE variant."
@@ -193,6 +218,11 @@ on:
         description: "Description of the VR installation option."
         required: false
         default: 'Select this if you are using Skyrim VR v1.4.15.'
+      FOMOD_VR_IMAGE:
+        type: string
+        description: "Path to the image file to be used as a cover for VR installation option."
+        required: false
+        default: ''
       FOMOD_VR_MIN_GAME_VERSION:
         type: string
         description: "Minimum version of the game that is recognized as VR variant."
@@ -216,15 +246,9 @@ jobs:
         shell: pwsh
         run: |
           $LIST = cmake --list-presets
-          $HAS_SE_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet)
-          $HAS_AE_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet)
-          $HAS_VR_CONFIG = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
-          $HAS_SE_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_BUILD_PRESET}}" -Quiet)
-          $HAS_AE_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_BUILD_PRESET}}" -Quiet)
-          $HAS_VR_BUILD = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_BUILD_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_BUILD_PRESET}}" -Quiet)
-          $HAS_SE = $HAS_SE_CONFIG -and $HAS_SE_BUILD
-          $HAS_AE = $HAS_AE_CONFIG -and $HAS_AE_BUILD
-          $HAS_VR = $HAS_VR_CONFIG -and $HAS_VR_BUILD
+          $HAS_SE = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet)
+          $HAS_AE = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet)
+          $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
           if ($HAS_SE) {
             echo "SE Variant: ✅"
             echo "::set-output name=HAS_SE::true"
@@ -249,7 +273,7 @@ jobs:
 
   se:
     needs: prepare
-    if: ${{ needs.prepare.outputs.HAS_SE == 'true' }}
+    if: needs.prepare.outputs.HAS_SE == 'true'
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
@@ -264,7 +288,7 @@ jobs:
     
   ae:
     needs: prepare
-    if:  ${{ needs.prepare.outputs.HAS_AE == 'true' }}
+    if: needs.prepare.outputs.HAS_AE == 'true'
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
@@ -279,7 +303,7 @@ jobs:
   
   ae353:
     needs: prepare
-    if:  (needs.prepare.outputs.HAS_AE == 'true') && (inputs.AE_353_BRANCH != '')
+    if: (needs.prepare.outputs.HAS_AE == 'true') && (inputs.AE_353_BRANCH != '')
     uses: ./.github/workflows/build-variant.yml
     with:
       GIT_BRANCH: ${{inputs.AE_353_BRANCH}}
@@ -296,7 +320,7 @@ jobs:
 
   vr:
     needs: prepare
-    if:  ${{ needs.prepare.outputs.HAS_VR == 'true' }}
+    if: needs.prepare.outputs.HAS_VR == 'true'
     uses: ./.github/workflows/build-variant.yml
     with:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
@@ -317,32 +341,38 @@ jobs:
       MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
       MOD_AUTHOR: ${{ inputs.FOMOD_MOD_AUTHOR }}
       MOD_NEXUS_ID: ${{ inputs.FOMOD_MOD_NEXUS_ID }}
-      REQUIRED_PATH: ${{ inputs.FOMOD_REQUIRED_PATH }}
-      REQUIRED_DST_PATH: $${{ inputs.FOMOD_REQUIRED_DST_PATH }}
+      REQUIRED_INSTALLATION_DIR: ${{ inputs.FOMOD_REQUIRED_INSTALLATION_DIR }}
+      REQUIRED_SRC_PATH: ${{ inputs.FOMOD_REQUIRED_SRC_PATH }}
+      REQUIRED_DST_PATH: ${{ inputs.FOMOD_REQUIRED_DST_PATH }}
       DST_PATH: ${{ inputs.FOMOD_DST_PATH }}
       TITLE: ${{ inputs.FOMOD_TITLE }}
       GROUP_NAME: ${{ inputs.FOMOD_GROUP_NAME }}
+      DEFAULT_IMAGE: ${{ inputs.FOMOD_DEFAULT_IMAGE }}
       SE_PATH: ${{ inputs.FOMOD_SE_PATH }}
       SE_NAME: ${{ inputs.FOMOD_SE_NAME }}
       SE_DESCR: ${{ inputs.FOMOD_SE_DESCR }}
+      SE_IMAGE: ${{ inputs.FOMOD_SE_IMAGE }}
       SE_MIN_GAME_VERSION: ${{ inputs.FOMOD_SE_MIN_GAME_VERSION }}
       SE_VERSION: ${{ needs.se.outputs.PRODUCT_VERSION }}
       SE_ARTIFACT: ${{ needs.se.outputs.ARTIFACT_NAME }}
       AE_PATH: ${{ inputs.FOMOD_AE_PATH }}
       AE_NAME: ${{ inputs.FOMOD_AE_NAME }}
       AE_DESCR: ${{ inputs.FOMOD_AE_DESCR }}
+      AE_IMAGE: ${{ inputs.FOMOD_AE_IMAGE }}
       AE_MIN_GAME_VERSION: ${{ inputs.FOMOD_AE_MIN_GAME_VERSION }}
       AE_VERSION: ${{ needs.ae.outputs.PRODUCT_VERSION }}
       AE_ARTIFACT: ${{ needs.ae.outputs.ARTIFACT_NAME }}
       AE353_PATH: ${{ inputs.FOMOD_AE353_PATH }}
       AE353_NAME: ${{ inputs.FOMOD_AE353_NAME }}
       AE353_DESCR: ${{ inputs.FOMOD_AE353_DESCR }}
+      AE353_IMAGE: ${{ inputs.FOMOD_AE353_IMAGE }}
       AE353_MIN_GAME_VERSION: ${{ inputs.FOMOD_AE353_MIN_GAME_VERSION }}
       AE353_VERSION: ${{ needs.ae353.outputs.PRODUCT_VERSION }}
       AE353_ARTIFACT: ${{ needs.ae353.outputs.ARTIFACT_NAME }}
       VR_PATH: ${{ inputs.FOMOD_VR_PATH }}
       VR_NAME: ${{ inputs.FOMOD_VR_NAME }}
       VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
+      VR_IMAGE: ${{ inputs.FOMOD_VR_IMAGE }}
       VR_MIN_GAME_VERSION: ${{ inputs.FOMOD_VR_MIN_GAME_VERSION }}
       VR_VERSION: ${{ needs.vr.outputs.PRODUCT_VERSION }}
       VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
