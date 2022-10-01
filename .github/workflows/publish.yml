@@ -41,21 +41,34 @@ jobs:
         $DESCR_FILE = "${{ inputs.MOD_DESCRIPTION }}"
         $CHANGELOG_FILE = "${{ inputs.MOD_CHANGELOG }}"
 
-        $DESCR = ''
-        $CHANGELOG = ''
+        $DESCR = ""
+        $CHANGELOG = ""
 
         If (![string]::IsNullOrEmpty($DESCR_FILE) -and (Test-Path $DESCR_FILE)) {
             echo "Found description at $DESCR_FILE ✅"
-            $DESCR = Get-Content $DESCR_FILE
+            $DESCR = Get-Content $DESCR_FILE -Raw
         } else {
             echo "No description provided ⬛"
         }
 
         If (![string]::IsNullOrEmpty($CHANGELOG_FILE) -and (Test-Path $CHANGELOG_FILE)) {
             echo "Found changelog at $CHANGELOG_FILE ✅"
-            $CHANGELOG = Get-Content $CHANGELOG_FILE
+            $CHANGELOG = Get-Content $CHANGELOG_FILE -Raw
         } else {
             echo "No changelog provided ⬛"
+        }
+
+        function Escape-NewLines {
+            [CmdletBinding()]
+            param (
+                [string] $text
+            )
+            process {
+              $result = $text -replace "%", "%25"
+              $result = $result -replace "`n", "%0A"
+              $result = $result -replace "`r", "%0D"
+              return $result
+            }
         }
 
         $RELEASE_BODY = "$($DESCR)`n`n$($CHANGELOG)".Trim()
@@ -63,14 +76,14 @@ jobs:
         $RELEASE_NAME = "${{ inputs.MOD_NAME }} ${{ inputs.MOD_VERSION }}".Trim()
 
         echo "::set-output name=RELEASE_NAME::$RELEASE_NAME"
-        echo "::set-output name=RELEASE_BODY::$RELEASE_BODY"
-        echo "::set-output name=RELEASE_DESCRIPTION::$DESCR"
-        echo "::set-output name=RELEASE_CHANGELOG::$CHANGELOG"
+        echo "::set-output name=RELEASE_BODY::$(Escape-NewLines "$RELEASE_BODY")"
+        echo "::set-output name=RELEASE_DESCRIPTION::$(Escape-NewLines "$DESCR")"
+        echo "::set-output name=RELEASE_CHANGELOG::$(Escape-NewLines "$CHANGELOG")"
 
     - name: Publish GitHub Release
       uses: svenstaro/upload-release-action@2.3.0
       with:
         asset_name: "${{ inputs.INSTALLER_NAME }}.zip"
         file: "${{ github.workspace }}/${{ inputs.INSTALLER_NAME }}.zip"
-        body: ${{ steps.release.outputs.RELEASE_BODY }}
+        body: "${{ steps.release.outputs.RELEASE_BODY }}"
         release_name: "${{ steps.release.outputs.RELEASE_NAME }}"
