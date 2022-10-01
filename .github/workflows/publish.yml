@@ -5,27 +5,85 @@ on:
     inputs:
       INSTALLER_NAME:
         type: string
+        required: true
+      MOD_NAME:
+        type: string
+        required: true
+      MOD_VERSION:
+        type: string
+        required: true
+      MOD_DESCRIPTION:
+        type: string
+        required: true
+      MOD_CHANGELOG:
+        type: string
+        required: true
 jobs:
   github:
     runs-on: windows-latest
     steps:
+    - uses: actions/checkout@v3
+
     - uses: actions/download-artifact@v3
       with:
         name: ${{inputs.INSTALLER_NAME}}
         path: ${{inputs.INSTALLER_NAME}}
 
-    - name: "Contents of downloaded artifacts"
-      run: dir
-
     - name: zip
       shell: pwsh
       run: Compress-Archive -Path "${{inputs.INSTALLER_NAME}}" -DestinationPath "${{inputs.INSTALLER_NAME}}.zip"
 
-    - name: "Contents of zipped artifacts"
-      run: dir
+    - name: Create Release body
+      id: release
+      shell: pwsh
+      if: inputs.MOD_DESCRIPTION != '' || inputs.MOD_CHANGELOG != ''
+      run: |
+        $DESCR_FILE = "${{ inputs.MOD_DESCRIPTION }}"
+        $CHANGELOG_FILE = "${{ inputs.MOD_CHANGELOG }}"
+
+        $DESCR = ""
+        $CHANGELOG = ""
+
+        If (![string]::IsNullOrEmpty($DESCR_FILE) -and (Test-Path $DESCR_FILE)) {
+            echo "Found description at $DESCR_FILE ✅"
+            $DESCR = Get-Content $DESCR_FILE -Raw
+        } else {
+            echo "No description provided ⬛"
+        }
+
+        If (![string]::IsNullOrEmpty($CHANGELOG_FILE) -and (Test-Path $CHANGELOG_FILE)) {
+            echo "Found changelog at $CHANGELOG_FILE ✅"
+            $CHANGELOG = Get-Content $CHANGELOG_FILE -Raw
+        } else {
+            echo "No changelog provided ⬛"
+        }
+
+        function Escape-NewLines {
+            [CmdletBinding()]
+            param (
+                [string] $text
+            )
+            process {
+              $result = $text -replace "%", "%25"
+              $result = $result -replace "`n", "%0A"
+              $result = $result -replace "`r", "%0D"
+              return $result
+            }
+        }
+
+        $RELEASE_BODY = "$($DESCR)`n`n$($CHANGELOG)".Trim()
+
+        $RELEASE_NAME = "${{ inputs.MOD_NAME }} ${{ inputs.MOD_VERSION }}".Trim()
+
+        echo "::set-output name=RELEASE_NAME::$RELEASE_NAME"
+        echo "::set-output name=RELEASE_BODY::$(Escape-NewLines "$RELEASE_BODY")"
+        echo "::set-output name=RELEASE_DESCRIPTION::$(Escape-NewLines "$DESCR")"
+        echo "::set-output name=RELEASE_CHANGELOG::$(Escape-NewLines "$CHANGELOG")"
 
     - name: Publish GitHub Release
       uses: svenstaro/upload-release-action@2.3.0
       with:
         asset_name: "${{ inputs.INSTALLER_NAME }}.zip"
         file: "${{ github.workspace }}/${{ inputs.INSTALLER_NAME }}.zip"
+        body: "${{ steps.release.outputs.RELEASE_BODY }}"
+        release_name: "${{ steps.release.outputs.RELEASE_NAME }}"

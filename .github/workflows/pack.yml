@@ -228,6 +228,16 @@ on:
         description: "Minimum version of the game that is recognized as VR variant."
         required: false
         default: '1.4.15.0'
+      PUBLISH_MOD_DESCRIPTION_FILE:
+        type: string
+        description: "Path to a text file containing description of the mod's file. Path is relative to repository's root."
+        required: false
+        default: ''
+      PUBLISH_MOD_CHANGELOG_FILE:
+        type: string
+        description: "Path to a text file containing changelog that will be associated with the version being published. Path is relative to repository's root."
+        required: false
+        default: ''
 
 jobs:
   prepare:
@@ -383,3 +393,7 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}
+      MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
+      MOD_VERSION: ${{ needs.fomod.outputs.MOD_VERSION }}
+      MOD_DESCRIPTION: ${{ inputs.PUBLISH_MOD_DESCRIPTION_FILE }}
+      MOD_CHANGELOG: ${{ inputs.PUBLISH_MOD_CHANGELOG_FILE }}
