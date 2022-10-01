@@ -73,10 +73,11 @@ jobs:
       CMAKE_VR_BUILD_PRESET: ''
 ```
 
-> Note: Build Presets are an opt-in feature, if these presets are not specified then the workflow will perform `cmake --build BINARY_DIR --config Release`. 
-> If your `CMakePresets.json` provide build presets you can set them via these parameters.
+> Note: **Build Presets** are an opt-in feature, if these presets are not specified then the workflow will perform `cmake --build $BINARY_DIR --config Release`. 
+> If your `CMakePresets.json` provide build presets you can set them via these parameters and the workflow will do `cmake --build --preset $BUILD_PRESET` instead.
 
 > The workflow checks whether specified **Configuration Presets** are present in `CMakePresets.json` and builds only variants that have existing presets.
+> You might explicitly disable building of any variant by passing blank string to corresponding **Configuration Preset**.
 
 ---
 
@@ -240,7 +241,7 @@ jobs:
 ##### Additional required installation
 
 You also may have additional files you'd want to include along with plugin variants. 
-For this case you can specify a directory containing files that you want to be always installed using `FOMOD_REQUIRED_INSTALLATION_DIR` parameter. This path is relative to your repository's root where you place the required files.
+For this case you can specify a directory containing files that you want to be always installed using `FOMOD_REQUIRED_INSTALLATION_DIR` parameter. This path is relative to your repository's root where you place the required files. The files in specified directory will be copied into FOMOD's installer to directory specified with in `FOMOD_REQUIRED_SRC_PATH`.
 
 > By default, `FOMOD_REQUIRED_INSTALLATION_DIR` is blank, so that required installation is skipped.
 
@@ -290,7 +291,8 @@ jobs:
 
 #### Installation Option Images
 
-In addition to textual content of the installer you might as well provide cover images for each installation option:
+In addition to textual content of the installer you might as well provide cover images for each installation option.
+Put them inside your repository and specify paths to these images. Path is relative to repository's root.
 
 ```yaml
 jobs:
