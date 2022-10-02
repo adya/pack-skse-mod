@@ -395,10 +395,6 @@ jobs:
       shell: pwsh
       if: (inputs.VR_ARTIFACT != '') && (steps.fomod.outputs.VR_PATH != '')
       run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.VR_PATH }}"
-        
-    - name: Zip Installer
-      shell: pwsh
-      run: Compress-Archive -Path "${{ steps.fomod.outputs.INSTALLER_DIR }}" -DestinationPath "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
