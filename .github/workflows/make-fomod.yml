@@ -218,21 +218,23 @@ jobs:
                         $xmlWriter.WriteStartElement("patterns")
                         # Write pattern for each version
                         Foreach ($Variant in $Variants) {
-                            If ($Variant.GameVersion -eq $GameVersion) {
-                                $DepType = "Recommended"
-                            } else {
-                                $DepType = "Optional"
-                            }
-                            $xmlWriter.WriteStartElement("pattern")
-                                $xmlWriter.WriteStartElement("dependencies")
-                                    $xmlWriter.WriteStartElement("gameDependency")
-                                        $xmlWriter.WriteAttributeString("version", $Variant.GameVersion)
+                            If ($Variant.IsDetected) {
+                                If ($Variant.GameVersion -eq $GameVersion) {
+                                    $DepType = "Recommended"
+                                } else {
+                                    $DepType = "Optional"
+                                }
+                                $xmlWriter.WriteStartElement("pattern")
+                                    $xmlWriter.WriteStartElement("dependencies")
+                                        $xmlWriter.WriteStartElement("gameDependency")
+                                            $xmlWriter.WriteAttributeString("version", $Variant.GameVersion)
+                                        $xmlWriter.WriteEndElement()
+                                    $xmlWriter.WriteEndElement()
+                                    $xmlWriter.WriteStartElement("type")
+                                        $xmlWriter.WriteAttributeString("name", $DepType)
                                     $xmlWriter.WriteEndElement()
                                 $xmlWriter.WriteEndElement()
-                                $xmlWriter.WriteStartElement("type")
-                                    $xmlWriter.WriteAttributeString("name", $DepType)
-                                $xmlWriter.WriteEndElement()
-                            $xmlWriter.WriteEndElement()
+                            }
                         }
                         $xmlWriter.WriteEndElement()
                     $xmlWriter.WriteEndElement()
