@@ -5,8 +5,9 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
 ### Features
 
 - ✅ Effortless - doesn't require specific GitHub Actions knowledge, easy to setup.
-- ✅ Builds all supported variants: SE, AE, AE (1.6.353), VR
-- ✅ Generates FOMOD
+- ✅ Builds all supported variants: SE, AE, AE (1.6.353), VR.
+- ✅ Include PDB files along with DLLs to easy debugging.
+- ✅ Generates FOMOD.
 - ✅ Publishes FOMOD installer to GitHub Releases.
 - ⬛ _Publishes FOMOD installer directly to Nexus mod page (Coming soon-ish)._
 
@@ -262,10 +263,22 @@ jobs:
 
 ---
 
+#### Including Program Debug Database (PDB) files
+
+If you'd like to distribute your mod with PDB files, you may specify `FOMOD_INCLUDE_PDB` option. This will include PDB files into FOMOD and install them along with DLLs.
+```yaml
+jobs:
+  run:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    with:
+      FOMOD_INCLUDE_PDB: true
+```
+
+---
+
 #### Installer Content
 
 Things like installer's title, option names, descriptions, minimum required game versions are all configurable using the following parameters:
-
 ```yaml
 jobs:
   run:
@@ -293,7 +306,6 @@ jobs:
 
 In addition to textual content of the installer you might as well provide cover images for each installation option.
 Put them inside your repository and specify paths to these images. Path is relative to repository's root.
-
 ```yaml
 jobs:
   run:
@@ -334,7 +346,6 @@ When you push a new `tag` to GitHub, the workflow will perform an additional pub
 #### Archive Type
 
 When publishing FOMOD installer you may specify what archiver to use. Currently supported are `zip` and `7z`:
-
 ```yaml
 jobs:
   run:
@@ -382,7 +393,6 @@ This will publish produced installer's package directly to your mod's Nexus page
 1.1.  or if you plan on using it in multiple repositories, consider creating your own organization and moving all repos there, so they'll share the same Organization's secrets.
 2. Get Cookies from your active Nexus session. This can be done in various ways, for example, using **Get cookies.txt* [for Google Chrom](https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid) (or [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip))
 3. Once set you're ready to enable publishing on Nexus step:
-
 ```yaml
 jobs:
   run:
