@@ -143,16 +143,25 @@ jobs:
       run: |
         $PRODUCT_NAME = If (![string]::IsNullOrEmpty("${{inputs.BINARY_NAME}}")) {"${{inputs.BINARY_NAME}}"} Else { cmake -L -N ${{inputs.BINARY_DIR}} | grep "${{inputs.BINARY_NAME_VAR}}" | %{$_ -replace "${{inputs.BINARY_NAME_VAR}}:STRING=",""} }
         $PRODUCT_VERSION = If (![string]::IsNullOrEmpty("${{inputs.BINARY_VERSION}}")) {"${{inputs.BINARY_VERSION}}"} Else { cmake -L -N ${{inputs.BINARY_DIR}} | grep "^${{inputs.BINARY_VERSION_VAR}}" | %{$_ -replace "${{inputs.BINARY_VERSION_VAR}}:STRING=",""} }
-        $BINARY_NAME = "${PRODUCT_NAME}.dll"
-        $BINARY_PATH = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.BUILD_TYPE}}/${BINARY_NAME}"
+        
+        $PRODUCTS_DIR = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.BUILD_TYPE}}" 
+        
+        $BINARY_NAME = "$PRODUCT_NAME.dll"
+        $BINARY_PATH = "$PRODUCTS_DIR/$BINARY_NAME"
+
+        $PDB_NAME = "$PRODUCT_NAME.pdb"
+        $PDB_PATH = "$PRODUCTS_DIR/$PDB_NAME"
+
         $MARKETING_SUFFIX = "${{inputs.VARIANT}}".ToUpper()
-        $ARTIFACT_NAME = "${PRODUCT_NAME} $MARKETING_SUFFIX"
+        $ARTIFACT_NAME = "$PRODUCT_NAME $MARKETING_SUFFIX"
 
         echo "::set-output name=PRODUCT_NAME::$PRODUCT_NAME"
         echo "::set-output name=PRODUCT_VERSION::$PRODUCT_VERSION"
         echo "::set-output name=ARTIFACT_NAME::$ARTIFACT_NAME"
         echo "::set-output name=BINARY_PATH::$BINARY_PATH"
         echo "::set-output name=BINARY_NAME::$BINARY_NAME"
+        echo "::set-output name=PDB_PATH::$PDB_PATH"
+        echo "::set-output name=PDB_NAME::$PDB_NAME"
         echo "Built $BINARY_NAME ✅"
         echo "Location: $BINARY_PATH"
 
@@ -161,5 +170,7 @@ jobs:
       with: 
         name: ${{ steps.export.outputs.ARTIFACT_NAME }}
         if-no-files-found: error
-        path: ${{ steps.export.outputs.BINARY_PATH }}
+        path: |
+          ${{ steps.export.outputs.BINARY_PATH }}
+          ${{ steps.export.outputs.PDB_PATH }}
       

@@ -80,6 +80,11 @@ on:
         description: "Name of the branch in powerof3/CommonLibSSE repo to be used when building AE 1.6.353 variant. This will forcefully update CommonLibSSE submodule to use latest commit of that branch instead."
         required: false
         default: 'dev-1.6.353'
+      FOMOD_INCLUDE_PDB:
+        type: boolean
+        description: "Flag indicating whether PDB files should be packed into FOMOD along with DLLs."
+        required: false
+        default: false
       FOMOD_MOD_NAME:
         type: string
         description: "Name of the mod that will be displayed in FOMOD Installer."
@@ -367,6 +372,7 @@ jobs:
       REQUIRED_SRC_PATH: ${{ inputs.FOMOD_REQUIRED_SRC_PATH }}
       REQUIRED_DST_PATH: ${{ inputs.FOMOD_REQUIRED_DST_PATH }}
       DST_PATH: ${{ inputs.FOMOD_DST_PATH }}
+      INCLUDE_PDB: ${{ inputs.FOMOD_INCLUDE_PDB }}
       TITLE: ${{ inputs.FOMOD_TITLE }}
       GROUP_NAME: ${{ inputs.FOMOD_GROUP_NAME }}
       DEFAULT_IMAGE: ${{ inputs.FOMOD_DEFAULT_IMAGE }}
