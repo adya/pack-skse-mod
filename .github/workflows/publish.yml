@@ -40,7 +40,7 @@ jobs:
     - name: 7z Installer
       if: inputs.ARCHIVE_TYPE == '7z'
       shell: pwsh
-      run: 7z a "${{inputs.INSTALLER_NAME}}.7z" "${{inputs.INSTALLER_NAME}}" -r
+      run: 7z a -t7z -mx=9 "${{inputs.INSTALLER_NAME}}.7z" "${{inputs.INSTALLER_NAME}}" -r
 
     - name: Create Release body
       id: release

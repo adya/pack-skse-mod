@@ -170,7 +170,7 @@ jobs:
       with: 
         name: ${{ steps.export.outputs.ARTIFACT_NAME }}
         if-no-files-found: error
-        paths: |
+        path: |
           ${{ steps.export.outputs.BINARY_PATH }}
           ${{ steps.export.outputs.PDB_PATH }}
       
