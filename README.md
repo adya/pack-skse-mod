@@ -36,9 +36,6 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
   - [Nexus Mod](#nexus-mod)
 + [Extending The Workflow](#extending-the-workflow)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
-
 ### Setting up the workflow
 
 The workflow tries to be as unintrusive to the actual build process as possible and has only few requirements:
