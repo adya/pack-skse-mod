@@ -331,6 +331,24 @@ When you push a new `tag` to GitHub, the workflow will perform an additional pub
 
 ---
 
+#### Archive Type
+
+When publishing FOMOD installer you may specify what archiver to use. Currently supported are `zip` and `7z`:
+
+```yaml
+jobs:
+  run:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    with:
+      FOMOD_ARCHIVE_TYPE: '7z'
+```
+
+> Note: By deafult workflow will use `FOMOD_ARCHIVE_TYPE: 'zip'`.
+
+> Note: This option is only relevant for publishing, since Artifacts produced by separate jobs are packed into zip automatically by GitHub Actions.
+
+---
+
 #### GitHub Releases
 
 One of the destinations where package can be published is GitHub's Releases. Once workflow publishes there you'll be able to download the installer's archive from Releases page of your repository.
