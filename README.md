@@ -15,6 +15,7 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
 
 ### Contents
 + [Setting up the workflow](#setting-up-the-workflow)
++ [Examples](#examples)
 + [CMake Configuration](#cmake-configuration)
     * [CMake Presets](#cmake-presets)
     * [Binary Directory](#binary-directory)
@@ -75,6 +76,14 @@ jobs:
 
 > Note: Default values for configuration of `pack.yml` workflow is based on [powerof3](https://github.com/powerof3) projects. This includes preset names, build directories, variable names, etc. If your project uses different naming you need to also specify custom values as described below.
 
+---
+
+### Examples
+
+Here are some examples of configured workflows:
+- [AnimObjectSwapper](https://github.com/powerof3/AnimObjectSwapper/pull/2/files): Basic configuration, builds SE, AE, VR, packs installer into 7z with PDB files.
+- [EnhancedReanimation](https://github.com/powerof3/EnhancedReanimation/pull/2/files): Does everything that AnimObjectSwapper + supports AE 1.6.353 as a separate variant.
+- [Spell Perk Item Distributor](https://github.com/adya/Spell-Perk-Item-Distributor/pull/2/files): Showcases custom project apth, configuration of the FOMOD, provides image and links to changelog and description files.
 ---
 
 ### CMake Configuration
