@@ -13,6 +13,32 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
 
 ---
 
+### Contents
++ [Setting up the workflow](#setting-up-the-workflow)
++ [CMake Configuration](#cmake-configuration)
+    * [CMake Presets](#cmake-presets)
+    * [Binary Directory](#binary-directory)
+    * [Project Root](#project-root)
+    * [Binary Name and Version](#binary-name-and-version)
++ [Building AE **1.6.353** (pre **1.6.629** variant)](#building-ae-16353-pre-16629-variant)
++ [FOMOD Customizations](#fomod-customizations)
+  - [General Information](#general-information)
+  - [Nexus Mods Integration](#nexus-mods-integration)
+  - [Installation Paths](#installation-paths)
+    * [Additional Required Installation](#additional-required-installation)
+  - [Including Program Debug Database (PDB) files](#including-program-debug-database-pdb-files)
+  - [Installer Content](#installer-content)
+  - [Installation Option Images](#installation-option-images)
+    * [Default image for all options](#default-image-for-all-options)
++ [Publishing](#publishing)
+  - [Archive Type](#archive-type)
+  - [GitHub Releases](#github-releases)
+  - [Nexus Mod](#nexus-mod)
++ [Extending The Workflow](#extending-the-workflow)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
 ### Setting up the workflow
 
 The workflow tries to be as unintrusive to the actual build process as possible and has only few requirements:
@@ -24,7 +50,7 @@ The workflow tries to be as unintrusive to the actual build process as possible 
   ```
   > Note: Make sure to point CMake to submodules paths in `CMakeLists.txt`.
   
-2. Set `NAME` and `VERSION` variables as cache variables in `CMakeLists.txt`. (See [Binary Name and Version](https://github.com/adya/pack-skse-mod/edit/main/README.md#binary-name-and-version) for other options):
+2. Set `NAME` and `VERSION` variables as cache variables in `CMakeLists.txt`. (See [Binary Name and Version](https://github.com/adya/pack-skse-mod#binary-name-and-version) for other options):
   ```cmake
   set(NAME "my_skse_mod" CACHE STRING "")
   set(VERSION 1.0.0 CACHE STRING "")
@@ -239,7 +265,7 @@ jobs:
 
 ---
 
-##### Additional required installation
+##### Additional Required Installation
 
 You also may have additional files you'd want to include along with plugin variants. 
 For this case you can specify a directory containing files that you want to be always installed using `FOMOD_REQUIRED_INSTALLATION_DIR` parameter. This path is relative to your repository's root where you place the required files. The files in specified directory will be copied into FOMOD's installer to directory specified with in `FOMOD_REQUIRED_SRC_PATH`.
