@@ -351,10 +351,10 @@ jobs:
   run:
     uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
     with:
-      FOMOD_ARCHIVE_TYPE: '7z'
+      PUBLISH_ARCHIVE_TYPE: '7z'
 ```
 
-> Note: By deafult workflow will use `FOMOD_ARCHIVE_TYPE: 'zip'`.
+> Note: By deafult workflow will use `PUBLISH_ARCHIVE_TYPE: 'zip'`.
 
 > Note: This option is only relevant for publishing, since Artifacts produced by separate jobs are packed into zip automatically by GitHub Actions.
 
