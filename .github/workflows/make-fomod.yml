@@ -174,10 +174,10 @@ jobs:
         }
 
         $Variants = @(
-          Create-Variant-Info '${{inputs.VR_NAME}}' '${{inputs.VR_PATH}}' '${{inputs.VR_DESCR}}' '${{inputs.VR_IMAGE}}' '${{inputs.VR_MIN_GAME_VERSION}}' '${{inputs.VR_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.SE_NAME}}' '${{inputs.SE_PATH}}' '${{inputs.SE_DESCR}}' '${{inputs.SE_IMAGE}}' '${{inputs.SE_MIN_GAME_VERSION}}' '${{inputs.SE_ARTIFACT}}'
-          Create-Variant-Info '${{inputs.AE353_NAME}}' '${{inputs.AE353_PATH}}' '${{inputs.AE353_DESCR}}' '${{inputs.AE353_IMAGE}}' '${{inputs.AE353_MIN_GAME_VERSION}}' '${{inputs.AE353_ARTIFACT}}'
           Create-Variant-Info '${{inputs.AE_NAME}}' '${{inputs.AE_PATH}}' '${{inputs.AE_DESCR}}' '${{inputs.AE_IMAGE}}' '${{inputs.AE_MIN_GAME_VERSION}}' '${{inputs.AE_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.AE353_NAME}}' '${{inputs.AE353_PATH}}' '${{inputs.AE353_DESCR}}' '${{inputs.AE353_IMAGE}}' '${{inputs.AE353_MIN_GAME_VERSION}}' '${{inputs.AE353_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.SE_NAME}}' '${{inputs.SE_PATH}}' '${{inputs.SE_DESCR}}' '${{inputs.SE_IMAGE}}' '${{inputs.SE_MIN_GAME_VERSION}}' '${{inputs.SE_ARTIFACT}}'
+          Create-Variant-Info '${{inputs.VR_NAME}}' '${{inputs.VR_PATH}}' '${{inputs.VR_DESCR}}' '${{inputs.VR_IMAGE}}' '${{inputs.VR_MIN_GAME_VERSION}}' '${{inputs.VR_ARTIFACT}}'
         )
 
         # Writes installation option with given title, desciption and path. Providing auto-select behavior for specified versions.
@@ -218,21 +218,23 @@ jobs:
                         $xmlWriter.WriteStartElement("patterns")
                         # Write pattern for each version
                         Foreach ($Variant in $Variants) {
-                            If ($Variant.GameVersion -eq $GameVersion) {
-                                $DepType = "Recommended"
-                            } else {
-                                $DepType = "Optional"
-                            }
-                            $xmlWriter.WriteStartElement("pattern")
-                                $xmlWriter.WriteStartElement("dependencies")
-                                    $xmlWriter.WriteStartElement("gameDependency")
-                                        $xmlWriter.WriteAttributeString("version", $Variant.GameVersion)
+                            If ($Variant.IsDetected) {
+                                If ($Variant.GameVersion -eq $GameVersion) {
+                                    $DepType = "Recommended"
+                                } else {
+                                    $DepType = "Optional"
+                                }
+                                $xmlWriter.WriteStartElement("pattern")
+                                    $xmlWriter.WriteStartElement("dependencies")
+                                        $xmlWriter.WriteStartElement("gameDependency")
+                                            $xmlWriter.WriteAttributeString("version", $Variant.GameVersion)
+                                        $xmlWriter.WriteEndElement()
+                                    $xmlWriter.WriteEndElement()
+                                    $xmlWriter.WriteStartElement("type")
+                                        $xmlWriter.WriteAttributeString("name", $DepType)
                                     $xmlWriter.WriteEndElement()
                                 $xmlWriter.WriteEndElement()
-                                $xmlWriter.WriteStartElement("type")
-                                    $xmlWriter.WriteAttributeString("name", $DepType)
-                                $xmlWriter.WriteEndElement()
-                            $xmlWriter.WriteEndElement()
+                            }
                         }
                         $xmlWriter.WriteEndElement()
                     $xmlWriter.WriteEndElement()
@@ -393,10 +395,6 @@ jobs:
       shell: pwsh
       if: (inputs.VR_ARTIFACT != '') && (steps.fomod.outputs.VR_PATH != '')
       run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.VR_PATH }}"
-        
-    - name: Zip Installer
-      shell: pwsh
-      run: Compress-Archive -Path "${{ steps.fomod.outputs.INSTALLER_DIR }}" -DestinationPath "${{ steps.fomod.outputs.INSTALLER_DIR }}.zip"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3

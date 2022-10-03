@@ -128,6 +128,11 @@ on:
         description: "Path to the image file to be used as a default cover for all installation options. Ignored for variants that define their own image."
         required: false
         default: ''
+      FOMOD_ARCHIVE_TYPE:
+        type: string
+        description: "Preferred type of archive to be used. Supports either zip or 7z"
+        required: false
+        default: 'zip'
       FOMOD_SE_PATH:
         type: string
         description: "Path to SE binaries relative to FOMOD Installer's root."
@@ -281,6 +286,13 @@ jobs:
             echo "::set-output name=HAS_VR::false"
           }
 
+          $ARCHIVE_TYPE = '${{ inputs.FOMOD_ARCHIVE_TYPE }}'
+
+          If (($ARCHIVE_TYPE -ne 'zip') -and ($ARCHIVE_TYPE -ne '7z')) {
+            echo "FOMOD_ARCHIVE_TYPE must be either 'zip' or '7z', but not '$ARCHIVE_TYPE'"
+            exit 1
+          }
+
   se:
     needs: prepare
     if: needs.prepare.outputs.HAS_SE == 'true'
@@ -393,6 +405,7 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}
+      ARCHIVE_TYPE: ${{ inputs.FOMOD_ARCHIVE_TYPE }}
       MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
       MOD_VERSION: ${{ needs.fomod.outputs.MOD_VERSION }}
       MOD_DESCRIPTION: ${{ inputs.PUBLISH_MOD_DESCRIPTION_FILE }}
