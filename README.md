@@ -400,3 +400,45 @@ jobs:
 > Replace `YOUR_NEXUS_API_KEY_SECRET` and `YOUR_NEXUS_COOKIES_SECRET` with corresponding secrets that you've created.
 
 ##### IMPORTANT: You must also provide `FOMOD_MOD_NEXUS_ID` as it will be used for publishing.
+
+---
+
+### Extending The Workflow
+
+The workflow exposes all useful data as outputs. This allows building your custom workflows on top of pack-skse-mod.
+
+Here are currently available outputs:
+- `PRODUCT_VERSION`
+- `FOMOD_INSTALLER`
+- `SE_ARTIFACT_NAME`
+- `AE_ARTIFACT_NAME`
+- `AE353_ARTIFACT_NAME`
+- `VR_ARTIFACT_NAME`
+
+which can be used in your workflow like this:
+```yaml
+name: Main
+
+on:
+  push:
+    branches: '**'
+    tags: '*'
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    with:
+      FOMOD_MOD_NAME: "My SKSE Mod"
+      FOMOD_MOD_AUTHOR: "The Author"
+
+  post-discord-notification:
+    runs-on: windows-latest
+    needs: run
+    steps:
+      - name: Print version
+        run: echo "Built Version ${{needs.run.outputs.PRODUCT_VERSION}}"
+```
