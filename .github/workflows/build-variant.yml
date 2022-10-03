@@ -109,24 +109,40 @@ jobs:
           echo "::set-output name=CommonLib_SHA::$CLibVRSHA"
           echo "::set-output name=CommonLib_PATH::$CLibPath"
         }
+    
+    - name: Get CCache
+      shell: pwsh
+      run: choco install ccache
+
+    - name: Configure CCache
+      id: ccache-config
+      shell: pwsh
+      run: |
+        $CCACHE_DIR="${{ github.workspace }}/.ccache"
+        echo "CCACHE_BASE_DIR=${{ github.workspace }}" >> $GITHUB_ENV
+        echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_ENV
+        echo "CCACHE_COMPRESS=true" >> $GITHUB_ENV
+        echo "CCACHE_COMPRESSLEVEL=6" >> $GITHUB_ENV
+        echo "CCACHE_MAXSIZE=600M" >> $GITHUB_ENV
+        echo "::set-output name=CCACHE_DIR::$CCACHE_DIR"
 
     - name: Cache CommonLibSSE
       uses: actions/cache@v3
       if: steps.clib-sha.outputs.CommonLib_SHA != '' && inputs.VARIANT != 'vr'
       with:
-        path: ${{steps.clib-sha.outputs.CommonLib_PATH}}
+        path: ${{steps.ccache-config.outputs.CCACHE_DIR}}
         key: ${{runner.os}}-${{env.COMMON_LIB_SSE_NAME}}-${{inputs.VARIANT}}-${{steps.clib-sha.outputs.CommonLib_SHA}}
 
     - name: Cache CommonLibVR
       uses: actions/cache@v3
       if: steps.clib-sha.outputs.CommonLib_SHA != '' && inputs.VARIANT == 'vr'
       with:
-        path: ${{steps.clib-sha.outputs.CommonLib_PATH}}
+        path: ${{steps.ccache-config.outputs.CCACHE_DIR}}
         key: ${{runner.os}}-${{env.COMMON_LIB_VR_NAME}}-${{inputs.VARIANT}}-${{steps.clib-sha.outputs.CommonLib_SHA}}      
 
     - name: Configure CMake
       shell: pwsh
-      run: cmake --preset ${{inputs.CMAKE_CONFIG_PRESET}}
+      run: cmake --preset ${{inputs.CMAKE_CONFIG_PRESET}} -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
     - name: Run CMake with build config
       if: inputs.CMAKE_BUILD_PRESET != ''
