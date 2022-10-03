@@ -248,6 +248,20 @@ on:
         description: "Path to a text file containing changelog that will be associated with the version being published. Path is relative to repository's root."
         required: false
         default: ''
+    outputs:
+      PRODUCT_VERSION:
+        value: ${{ jobs.fomod.outputs.MOD_VERSION }}
+      FOMOD_INSTALLER:
+        value: ${{ jobs.fomod.outputs.INSTALLER_NAME }}
+      SE_ARTIFACT_NAME:
+        value: ${{ jobs.se.outputs.ARTIFACT_NAME }}
+      AE_ARTIFACT_NAME:
+        value: ${{ jobs.ae.outputs.ARTIFACT_NAME }}
+      AE353_ARTIFACT_NAME:
+        value: ${{ jobs.ae353.outputs.ARTIFACT_NAME }}
+      VR_ARTIFACT_NAME:
+        value: ${{ jobs.vr.outputs.ARTIFACT_NAME }}
+      
 
 jobs:
   prepare:
