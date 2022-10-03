@@ -17,6 +17,8 @@ on:
         type: string
       DST_PATH:
         type: string
+      INCLUDE_PDB:
+        type: boolean
       TITLE:
         type: string
       GROUP_NAME:
@@ -367,8 +369,8 @@ jobs:
         path: ${{env.ARTIFACTS_DIR}}
 
     - name: Pack Required Files
-      shell: pwsh
       if: steps.req-install.outputs.HAS_REQUIRED_INSTALL == 'true'
+      shell: pwsh
       run: |
         $REQUIRED_DIR = "$PWD/${{ inputs.REQUIRED_INSTALLATION_DIR }}"
         $REQUIRED_SRC = "${{ env.INSTALLER_DIR }}/${{ inputs.REQUIRED_SRC_PATH }}"
@@ -377,24 +379,52 @@ jobs:
         dir "$REQUIRED_DIR/*" | mv -dest "$REQUIRED_SRC"
 
     - name: Pack SE dll
-      shell: pwsh
       if: (inputs.SE_ARTIFACT != '') && (steps.fomod.outputs.SE_PATH != '')
-      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.SE_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.SE_PATH }}"
+      shell: pwsh
+      run: |
+        $ARTIFACTS_DIR = "${{env.ARTIFACTS_DIR}}/${{inputs.SE_ARTIFACT}}"
+        $DST = "${{ steps.fomod.outputs.SE_PATH }}"
+        Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.dll | Move-Item -Destination $DST
+        If ('${{inputs.INCLUDE_PDB}}' -eq 'true') {
+            echo "Including PDB file for SE ✅"
+            Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.pdb | Move-Item -Destination $DST
+        }
 
     - name: Pack AE dll
       shell: pwsh
       if: (inputs.AE_ARTIFACT != '') && (steps.fomod.outputs.AE_PATH != '')
-      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.AE_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.AE_PATH }}"
+      run: |
+        $ARTIFACTS_DIR = "${{env.ARTIFACTS_DIR}}/${{inputs.AE_ARTIFACT}}"
+        $DST = "${{ steps.fomod.outputs.AE_PATH }}"
+        Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.dll | Move-Item -Destination $DST
+        If ('${{inputs.INCLUDE_PDB}}' -eq 'true') {
+            echo "Including PDB file for AE ✅"
+            Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.pdb | Move-Item -Destination $DST
+        }
     
     - name: Pack AE353 dll
-      shell: pwsh
       if: (inputs.AE353_ARTIFACT != '') && (steps.fomod.outputs.AE353_PATH != '')
-      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.AE353_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.AE353_PATH }}"
+      shell: pwsh
+      run: |
+        $ARTIFACTS_DIR = "${{env.ARTIFACTS_DIR}}/${{inputs.AE353_ARTIFACT}}"
+        $DST = "${{ steps.fomod.outputs.AE353_PATH }}"
+        Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.dll | Move-Item -Destination $DST
+        If ('${{inputs.INCLUDE_PDB}}' -eq 'true') {
+            echo "Including PDB file for AE353 ✅"
+            Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.pdb | Move-Item -Destination $DST
+        }
     
     - name: Pack VR dll
-      shell: pwsh
       if: (inputs.VR_ARTIFACT != '') && (steps.fomod.outputs.VR_PATH != '')
-      run: dir "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}/*" | mv -dest "${{ steps.fomod.outputs.VR_PATH }}"
+      shell: pwsh
+      run: |
+        $ARTIFACTS_DIR = "${{env.ARTIFACTS_DIR}}/${{inputs.VR_ARTIFACT}}"
+        $DST = "${{ steps.fomod.outputs.VR_PATH }}"
+        Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.dll | Move-Item -Destination $DST
+        If ('${{inputs.INCLUDE_PDB}}' -eq 'true') {
+            echo "Including PDB file for VR ✅"
+            Get-ChildItem -Path $ARTIFACTS_DIR -Filter *.pdb | Move-Item -Destination $DST
+        }
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
