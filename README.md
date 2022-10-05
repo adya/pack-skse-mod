@@ -239,11 +239,19 @@ jobs:
 
 #### Installation Paths
 
-Workflow is preconfigured for a common installer template:
+##### Source Paths
+
+Source paths are paths that specify where installable files are located within FOMOD. 
+These paths are relative to the installer's root.
+
+By default, workflow is preconfigured for a common installer template with the following structure:
 ```
 installer
 ├───Required*
 ├───SE
+│   └───SKSE
+│       └───Plugins
+├───AE353
 │   └───SKSE
 │       └───Plugins
 ├───AE
@@ -253,11 +261,8 @@ installer
     └───SKSE
         └───Plugins
 ```
-> Note: * 'Required' is a path is optional and configured with `FOMOD_REQUIRED_SRC_PATH`. (See [Additional required installation](https://github.com/adya/pack-skse-mod/blob/main/README.md#additional-required-installation)
 
-And installation goes to `Data/SKSE/Plugins` game directory (controller by `FOMOD_REQUIRED_DST_PATH` parameter).
-
-You may choose to customize the structure using the following parameters:
+This corresponds to the following configuration, that you may choose to customize:
 ```yaml
 jobs:
   run:
@@ -268,6 +273,18 @@ jobs:
       FOMOD_AE_PATH: "AE/SKSE/Plugins"
       FOMOD_AE353_PATH: "AE353/SKSE/Plugins"
 ```
+
+> Note: * 'Required' is an optional path and configured with `FOMOD_REQUIRED_SRC_PATH`. (See [Additional required installation](https://github.com/adya/pack-skse-mod/blob/main/README.md#additional-required-installation)
+
+---
+
+##### Destination Paths
+
+Destinations paths are paths that specify where files should be installed to. 
+****.
+> **Note: These paths are relative to game's `Data/` folder, so you should not start destination paths with "Data/" as this might cause issues in some mod managers. For instance, Vortex handles such paths correctly, but MO2 does not.**
+
+Installation path for all options is configured with `FOMOD_DST_PATH` and by default is set to `SKSE/Plugins`.
 
 ---
 
@@ -288,10 +305,9 @@ jobs:
     with:
       FOMOD_REQUIRED_INSTALLATION_DIR: "FOMOD/Required Files"
       FOMOD_REQUIRED_SRC_PATH: "Required"
-      FOMOD_REQUIRED_DST_PATH: "Data"
 ```
 
-> Note that contents of `FOMOD_REQUIRED_INSTALLATION_DIR` will be copied to game's Data folder (with default `FOMOD_REQUIRED_DST_PATH`).
+> Note that contents of `FOMOD_REQUIRED_INSTALLATION_DIR` will be copied to game's Data folder (this is the default `FOMOD_REQUIRED_DST_PATH`).
 
 ---
 

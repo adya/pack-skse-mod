@@ -112,12 +112,12 @@ on:
         type: string
         description: "Path to the installation directory where FOMOD will install required files. This path is relative to FOMOD Installer's root."
         required: false
-        default: 'Data'
+        default: ''
       FOMOD_DST_PATH:
         type: string
-        description: "Path to the installation directory where FOMOD will install files. This is typically Data/SKSE/Plugins."
+        description: "Path to the installation directory where FOMOD will install files. This is typically SKSE/Plugins."
         required: false
-        default: 'Data/SKSE/Plugins'
+        default: 'SKSE/Plugins'
       FOMOD_TITLE:
         type: string
         description: "Title of the installation page in FOMOD Installer (displayed under the mod's name)."
