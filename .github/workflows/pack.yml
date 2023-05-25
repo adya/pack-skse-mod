@@ -28,6 +28,11 @@ on:
         description: "Name of the CMake variable that contains version of the built binary. Note that this variable must be CACHE variable."
         required: false
         default: "VERSION"
+      CMAKE_BUILD_CONFIGURATION:
+        type: string
+        description: "Configuration in which the project will be built. Note that you need to specify it even when providing build presets."
+        required: false
+        default: "Release"
       CMAKE_SE_CONFIG_PRESET:
         type: string
         description: "Name of the CMakePresets.json's configuration to use to generate the project files for SE variant."
@@ -321,6 +326,7 @@ jobs:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_SE_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_SE_BUILD_PRESET }}
+      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
       BINARY_DIR: ${{ inputs.CMAKE_SE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -336,6 +342,7 @@ jobs:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
+      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
       BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -353,6 +360,7 @@ jobs:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
+      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
       BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -368,6 +376,7 @@ jobs:
       CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_VR_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_VR_BUILD_PRESET }}
+      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
       BINARY_DIR: ${{ inputs.CMAKE_VR_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
