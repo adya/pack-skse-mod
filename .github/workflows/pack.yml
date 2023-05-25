@@ -270,6 +270,7 @@ jobs:
       HAS_SE: ${{ steps.variants.outputs.HAS_SE }}
       HAS_AE: ${{ steps.variants.outputs.HAS_AE }}
       HAS_VR: ${{ steps.variants.outputs.HAS_VR }}
+      THE_HELL: ${{ steps.variants.outputs.THE_HELL }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -285,28 +286,28 @@ jobs:
           $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
           if ($HAS_SE) {
             echo "SE Variant: ✅"
-            echo "HAS_SE=true" >> $GITHUB_OUTPUT
+            echo "HAS_SE=true" >> $Env:GITHUB_OUTPUT
           } else {
             echo "SE Variant: ⬛"
-            echo "HAS_SE=false" >> $GITHUB_OUTPUT
+            echo "HAS_SE=false" >> $Env:GITHUB_OUTPUT
           }
           if ($HAS_AE) {
             echo "AE Variant: ✅"
-            echo "HAS_AE=true" >> $GITHUB_OUTPUT
+            echo "HAS_AE=true" >> $Env:GITHUB_OUTPUT
           } else {
             echo "AE Variant: ⬛"
-            echo "HAS_AE=false" >> $GITHUB_OUTPUT
+            echo "HAS_AE=false" >> $Env:GITHUB_OUTPUT
           }
           if ($HAS_VR) {
             echo "VR Variant: ✅"
-            echo "HAS_VR=true" >> $GITHUB_OUTPUT
+            echo "HAS_VR=true" >> $Env:GITHUB_OUTPUT
           } else {
             echo "VR Variant: ⬛"
-            echo "HAS_VR=false" >> $GITHUB_OUTPUT
+            echo "HAS_VR=false" >> $Env:GITHUB_OUTPUT
           }
 
           $ARCHIVE_TYPE = '${{ inputs.PUBLISH_ARCHIVE_TYPE }}'
-
+          
           If (($ARCHIVE_TYPE -ne 'zip') -and ($ARCHIVE_TYPE -ne '7z')) {
             echo "PUBLISH_ARCHIVE_TYPE must be either 'zip' or '7z', but not '$ARCHIVE_TYPE'"
             exit 1
@@ -375,7 +376,7 @@ jobs:
       VARIANT: "vr"
 
   fomod:
-    needs: [prepare, se, ae, vr, ae353]
+    needs: [se, ae, vr, ae353]
     if: always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure'))
     uses: ./.github/workflows/make-fomod.yml
     with:
