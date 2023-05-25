@@ -6,7 +6,7 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
 
 - ✅ Effortless - doesn't require specific GitHub Actions knowledge, easy to setup.
 - ✅ Builds all supported variants: SE, AE, AE (1.6.353), VR.
-- ✅ Include PDB files along with DLLs to easy debugging.
+- ✅ Include PDB files along with DLLs for easier debugging.
 - ✅ Generates FOMOD.
 - ✅ Publishes FOMOD installer to GitHub Releases.
 - ⬛ _Publishes FOMOD installer directly to Nexus mod page (Coming soon-ish)._
@@ -83,7 +83,7 @@ jobs:
 Here are some examples of configured workflows:
 - [AnimObjectSwapper](https://github.com/powerof3/AnimObjectSwapper/pull/2/files): Basic configuration, builds SE, AE, VR, packs installer into 7z with PDB files.
 - [EnhancedReanimation](https://github.com/powerof3/EnhancedReanimation/pull/2/files): Does everything that AnimObjectSwapper + supports AE 1.6.353 as a separate variant.
-- [Spell Perk Item Distributor](https://github.com/adya/Spell-Perk-Item-Distributor/pull/2/files): Showcases custom project apth, configuration of the FOMOD, provides image and links to changelog and description files.
+- [Spell Perk Item Distributor](https://github.com/adya/Spell-Perk-Item-Distributor/pull/2/files): Showcases custom project path, configuration of the FOMOD, provides image and links to changelog and description files.
 ---
 
 ### CMake Configuration

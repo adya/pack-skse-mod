@@ -48,7 +48,7 @@ on:
         value: ${{ jobs.build.outputs.BINARY_NAME }}
 
 env:
-  VCPG_COMMIT_ID: '01b29f6d8212bc845da64773b18665d682f5ab66'
+  VCPG_COMMIT_ID: '40619a55c3e76dc4005c8d1b7395071471bb8b96'
   COMMON_LIB_SSE_NAME: CommonLibSSE
   COMMON_LIB_VR_NAME: CommonLibVR
 
@@ -85,7 +85,7 @@ jobs:
         git checkout ${{inputs.GIT_COMMON_LIB_BRANCH}}
 
     - name: Restore artifacts, or setup vcpkg (do not install any package)
-      uses: lukka/run-vcpkg@v10
+      uses: lukka/run-vcpkg@v11
       id: runvcpkg
       with:
         vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'

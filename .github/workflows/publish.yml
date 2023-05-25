@@ -90,7 +90,7 @@ jobs:
         echo "RELEASE_CHANGELOG=$(Escape-NewLines "$CHANGELOG")" >> $Env:GITHUB_OUTPUT
 
     - name: Publish GitHub Release
-      uses: svenstaro/upload-release-action@2.3.0
+      uses: svenstaro/upload-release-action@2.4.0
       with:
         asset_name: "${{ inputs.INSTALLER_NAME }}.${{inputs.ARCHIVE_TYPE}}"
         file: "${{ github.workspace }}/${{ inputs.INSTALLER_NAME }}.${{inputs.ARCHIVE_TYPE}}"
