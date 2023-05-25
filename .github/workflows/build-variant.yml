@@ -16,6 +16,9 @@ on:
       CMAKE_BUILD_PRESET:
         type: string
         required: true
+      CMAKE_CONFIG:
+        type: string
+        required: true
       BINARY_DIR:
         type: string
         required: true
@@ -45,7 +48,6 @@ on:
         value: ${{ jobs.build.outputs.BINARY_NAME }}
 
 env:
-  BUILD_TYPE: Release
   VCPG_COMMIT_ID: '40619a55c3e76dc4005c8d1b7395071471bb8b96'
   COMMON_LIB_SSE_NAME: CommonLibSSE
   COMMON_LIB_VR_NAME: CommonLibVR
@@ -63,9 +65,14 @@ jobs:
     - uses: actions/checkout@v3
       with:
         ref: ${{inputs.GIT_BRANCH}}
-        submodules: recursive
+        submodules: true
         fetch-depth: 0
     
+    - name: "Print directory"
+      shell: pwsh
+      run: |
+        tree .
+
     - name: Use CommonLib 1.6.353
       if: inputs.GIT_COMMON_LIB_BRANCH != ''
       shell: pwsh
@@ -97,7 +104,7 @@ jobs:
     - name: Run CMake
       if: inputs.CMAKE_BUILD_PRESET == ''
       shell: pwsh
-      run: cmake --build ${{inputs.BINARY_DIR}} --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{inputs.BINARY_DIR}} --config ${{inputs.CMAKE_CONFIG}}
 
     - id: export
       shell: pwsh
@@ -105,7 +112,7 @@ jobs:
         $PRODUCT_NAME = If (![string]::IsNullOrEmpty("${{inputs.BINARY_NAME}}")) {"${{inputs.BINARY_NAME}}"} Else { cmake -L -N ${{inputs.BINARY_DIR}} | grep "${{inputs.BINARY_NAME_VAR}}" | %{$_ -replace "${{inputs.BINARY_NAME_VAR}}:STRING=",""} }
         $PRODUCT_VERSION = If (![string]::IsNullOrEmpty("${{inputs.BINARY_VERSION}}")) {"${{inputs.BINARY_VERSION}}"} Else { cmake -L -N ${{inputs.BINARY_DIR}} | grep "^${{inputs.BINARY_VERSION_VAR}}" | %{$_ -replace "${{inputs.BINARY_VERSION_VAR}}:STRING=",""} }
         
-        $PRODUCTS_DIR = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{env.BUILD_TYPE}}" 
+        $PRODUCTS_DIR = "${{inputs.BINARY_DIR}}/${{inputs.CMAKE_PROJECT_DIR}}/${{inputs.CMAKE_CONFIG}}" 
         
         $BINARY_NAME = "$PRODUCT_NAME.dll"
         $BINARY_PATH = "$PRODUCTS_DIR/$BINARY_NAME"
