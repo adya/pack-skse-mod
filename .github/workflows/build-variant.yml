@@ -66,6 +66,11 @@ jobs:
         submodules: recursive
         fetch-depth: 0
     
+    - name: "Print directory"
+      shell: pwsh
+      run: |
+        tree .
+
     - name: Use CommonLib 1.6.353
       if: inputs.GIT_COMMON_LIB_BRANCH != ''
       shell: pwsh
