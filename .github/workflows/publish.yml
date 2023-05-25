@@ -84,10 +84,10 @@ jobs:
 
         $RELEASE_NAME = "${{ inputs.MOD_NAME }} ${{ inputs.MOD_VERSION }}".Trim()
 
-        echo "::set-output name=RELEASE_NAME::$RELEASE_NAME"
-        echo "::set-output name=RELEASE_BODY::$(Escape-NewLines "$RELEASE_BODY")"
-        echo "::set-output name=RELEASE_DESCRIPTION::$(Escape-NewLines "$DESCR")"
-        echo "::set-output name=RELEASE_CHANGELOG::$(Escape-NewLines "$CHANGELOG")"
+        echo "RELEASE_NAME=$RELEASE_NAME" >> $Env:GITHUB_OUTPUT
+        echo "RELEASE_BODY=$(Escape-NewLines "$RELEASE_BODY")" >> $Env:GITHUB_OUTPUT
+        echo "RELEASE_DESCRIPTION=$(Escape-NewLines "$DESCR")" >> $Env:GITHUB_OUTPUT
+        echo "RELEASE_CHANGELOG=$(Escape-NewLines "$CHANGELOG")" >> $Env:GITHUB_OUTPUT
 
     - name: Publish GitHub Release
       uses: svenstaro/upload-release-action@2.4.0
