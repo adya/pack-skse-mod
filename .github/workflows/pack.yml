@@ -285,24 +285,24 @@ jobs:
           $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
           if ($HAS_SE) {
             echo "SE Variant: ✅"
-            echo "::set-output name=HAS_SE::true"
+            echo "HAS_SE=true" >> $GITHUB_OUTPUT
           } else {
             echo "SE Variant: ⬛"
-            echo "::set-output name=HAS_SE::false"
+            echo "HAS_SE=false" >> $GITHUB_OUTPUT
           }
           if ($HAS_AE) {
             echo "AE Variant: ✅"
-            echo "::set-output name=HAS_AE::true"
+            echo "HAS_AE=true" >> $GITHUB_OUTPUT
           } else {
             echo "AE Variant: ⬛"
-            echo "::set-output name=HAS_AE::false"
+            echo "HAS_AE=false" >> $GITHUB_OUTPUT
           }
           if ($HAS_VR) {
             echo "VR Variant: ✅"
-            echo "::set-output name=HAS_VR::true"
+            echo "HAS_VR=true" >> $GITHUB_OUTPUT
           } else {
             echo "VR Variant: ⬛"
-            echo "::set-output name=HAS_VR::false"
+            echo "HAS_VR=false" >> $GITHUB_OUTPUT
           }
 
           $ARCHIVE_TYPE = '${{ inputs.PUBLISH_ARCHIVE_TYPE }}'

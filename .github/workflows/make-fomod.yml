@@ -111,10 +111,10 @@ jobs:
         $HAS_VALID_SRC = ![string]::IsNullOrEmpty("${{ inputs.REQUIRED_SRC_PATH }}")
         If ($HAS_REQUIRED_INSTALL -and $HAS_VALID_SRC) {
             echo "Required installation will be packed ✅"
-            echo "::set-output name=HAS_REQUIRED_INSTALL::true"
+            echo "HAS_REQUIRED_INSTALL=true" >> $GITHUB_OUTPUT
         } else {
             echo "Required installation is not provided ⬛"
-            echo "::set-output name=HAS_REQUIRED_INSTALL::false"
+            echo "HAS_REQUIRED_INSTALL=false" >> $GITHUB_OUTPUT
         }
 
     - name: Create FOMOD 
@@ -354,13 +354,13 @@ jobs:
         Write-Info
         Write-Config
 
-        echo "::set-output name=MOD_VERSION::$MOD_VERSION"
-        echo "::set-output name=INSTALLER_NAME::$MOD_NAME FOMOD Installer"
-        echo "::set-output name=INSTALLER_DIR::$INSTALLER_DIR"
-        echo "::set-output name=SE_PATH::$INSTALLER_DIR/${{inputs.SE_PATH}}"
-        echo "::set-output name=AE_PATH::$INSTALLER_DIR/${{inputs.AE_PATH}}"
-        echo "::set-output name=AE353_PATH::$INSTALLER_DIR/${{inputs.AE353_PATH}}"
-        echo "::set-output name=VR_PATH::$INSTALLER_DIR/${{inputs.VR_PATH}}"
+        echo "MOD_VERSION=$MOD_VERSION" >> $GITHUB_OUTPUT
+        echo "INSTALLER_NAME=$MOD_NAME FOMOD Installer" >> $GITHUB_OUTPUT
+        echo "INSTALLER_DIR=$INSTALLER_DIR" >> $GITHUB_OUTPUT
+        echo "SE_PATH=$INSTALLER_DIR/${{inputs.SE_PATH}}" >> $GITHUB_OUTPUT
+        echo "AE_PATH=$INSTALLER_DIR/${{inputs.AE_PATH}}" >> $GITHUB_OUTPUT
+        echo "AE353_PATH=$INSTALLER_DIR/${{inputs.AE353_PATH}}" >> $GITHUB_OUTPUT
+        echo "VR_PATH=$INSTALLER_DIR/${{inputs.VR_PATH}}" >> $GITHUB_OUTPUT
         echo "Created $MOD_NAME ($MOD_VERSION) FOMOD Installer ✅"
         echo "Location: $INSTALLER_DIR"
 
