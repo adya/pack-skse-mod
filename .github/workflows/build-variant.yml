@@ -63,7 +63,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         ref: ${{inputs.GIT_BRANCH}}
-        submodules: recursive
+        submodules: true
         fetch-depth: 0
     
     - name: "Print directory"
