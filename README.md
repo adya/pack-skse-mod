@@ -16,6 +16,7 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
 ### Contents
 + [Setting up the workflow](#setting-up-the-workflow)
 + [Examples](#examples)
++ [SSH](#ssh)
 + [CMake Configuration](#cmake-configuration)
     * [CMake Presets](#cmake-presets)
     * [Build Configurations](#build-configurations)
@@ -85,6 +86,23 @@ Here are some examples of configured workflows:
 - [AnimObjectSwapper](https://github.com/powerof3/AnimObjectSwapper/pull/2/files): Basic configuration, builds SE, AE, VR, packs installer into 7z with PDB files.
 - [EnhancedReanimation](https://github.com/powerof3/EnhancedReanimation/pull/2/files): Does everything that AnimObjectSwapper + supports AE 1.6.353 as a separate variant.
 - [Spell Perk Item Distributor](https://github.com/adya/Spell-Perk-Item-Distributor/pull/2/files): Showcases custom project path, configuration of the FOMOD, provides image and links to changelog and description files.
+
+---
+
+### SSH
+
+If your repository or one of it's submodules uses an SSH, you may specify an SSH key that workflow will use to checkout such repositories.
+
+> Note: You should provide your SSH key as a [Secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+
+```yaml
+jobs:
+  run:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    secrets:
+      GIT_SSH_KEY: ${{ secrets.MY_SSH_KEY }}
+```
+
 ---
 
 ### CMake Configuration
