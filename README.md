@@ -136,21 +136,21 @@ jobs:
 ##### Build Configurations
 
 By default workflow assumes that `Release` build configuration will be used to build the project. This configuration is also used to determine path to the build artifacts that will be packed into FOMOD.
-When you want to use build configurations other than `Release` you can specify it with a `CMAKE_CONFIG` variable. 
+When you want to use build configurations other than `Release` you can specify it with a `CMAKE_BUILD_CONFIGURATION` variable. 
 For example, if you want to create both `Release` and `Debug` variants of the mod you can do this in your `main.yaml`:
 ```yaml
 jobs:
   release:
     uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
     with:
-      CMAKE_CONFIG: 'Release'
+      CMAKE_BUILD_CONFIGURATION: 'Release'
       FOMOD_MOD_NAME: "My SKSE Mod"
       FOMOD_MOD_AUTHOR: "The Author"
       
   debug:
     uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
     with:
-      CMAKE_CONFIG: 'Debug'
+      CMAKE_BUILD_CONFIGURATION: 'Debug'
       FOMOD_MOD_NAME: "My SKSE Mod DEBUG"
       FOMOD_MOD_AUTHOR: "The Author"
 ```
