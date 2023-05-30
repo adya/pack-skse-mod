@@ -37,6 +37,9 @@ on:
       VARIANT:
         type: string
         required: true
+    secrets:
+      GIT_SSH_KEY:
+        required: false
     outputs:
       ARTIFACT_NAME:
         value: ${{ jobs.build.outputs.ARTIFACT_NAME }}
@@ -64,8 +67,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{inputs.GIT_BRANCH}}
-        submodules: true
+        ref: ${{ inputs.GIT_BRANCH }}
+        ssh-key: ${{ secrets.GIT_SSH_KEY }}
+        submodules: recursive
         fetch-depth: 0
     
     - name: "Print directory"

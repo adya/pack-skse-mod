@@ -253,6 +253,10 @@ on:
         description: "Path to a text file containing changelog that will be associated with the version being published. Path is relative to repository's root."
         required: false
         default: ''
+    secrets:
+      GIT_SSH_KEY:
+        description: "Public part of the Deploy Key that will be used to checkout repository or any submodules when they use SSH."
+        required: false
     outputs:
       PRODUCT_VERSION:
         value: ${{ jobs.fomod.outputs.MOD_VERSION }}
@@ -333,6 +337,8 @@ jobs:
       BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
       BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "se"
+    secrets:
+      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
     
   ae:
     needs: prepare
@@ -349,7 +355,9 @@ jobs:
       BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
       BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "ae"
-  
+    secrets:
+      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
+
   ae353:
     needs: prepare
     if: (needs.prepare.outputs.HAS_AE == 'true') && (inputs.AE_353_BRANCH != '')
@@ -367,6 +375,8 @@ jobs:
       BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
       BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "ae353"
+    secrets:
+      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
 
   vr:
     needs: prepare
@@ -383,6 +393,8 @@ jobs:
       BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
       BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
       VARIANT: "vr"
+    secrets:
+      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
 
   fomod:
     needs: [se, ae, vr, ae353]
