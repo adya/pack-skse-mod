@@ -71,11 +71,6 @@ jobs:
         ssh-key: ${{ secrets.GIT_SSH_KEY }}
         submodules: recursive
         fetch-depth: 0
-    
-    - name: "Print directory"
-      shell: pwsh
-      run: |
-        tree .
 
     - name: Use CommonLib 1.6.353
       if: inputs.GIT_COMMON_LIB_BRANCH != ''
