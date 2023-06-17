@@ -37,6 +37,9 @@ on:
       VARIANT:
         type: string
         required: true
+      VCPKG_COMMIT_ID:
+        type: string
+        required: true
     secrets:
       GIT_SSH_KEY:
         required: false
@@ -51,7 +54,6 @@ on:
         value: ${{ jobs.build.outputs.BINARY_NAME }}
 
 env:
-  VCPG_COMMIT_ID: '40619a55c3e76dc4005c8d1b7395071471bb8b96'
   COMMON_LIB_SSE_NAME: CommonLibSSE
   COMMON_LIB_VR_NAME: CommonLibVR
 
@@ -88,7 +90,7 @@ jobs:
       id: runvcpkg
       with:
         vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-        vcpkgGitCommitId: '${{ env.VCPG_COMMIT_ID }}'
+        vcpkgGitCommitId: '${{ inputs.VCPKG_COMMIT_ID }}'
         vcpkgJsonGlob: './${{inputs.CMAKE_PROJECT_DIR}}/vcpkg.json'
 
     - name: Configure CMake

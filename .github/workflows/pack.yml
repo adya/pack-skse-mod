@@ -75,6 +75,11 @@ on:
         type: string
         required: false
         default: "buildvr"
+      VCPKG_COMMIT_ID:
+        type: string
+        description: "Commit SHA of the vcpkg repository to use when building a project."
+        required: false
+        default: '501db0f17ef6df184fcdbfbe0f87cde2313b6ab1'
       AE_353_BRANCH:
         type: string
         description: "Name of the branch in current repository that is compatible with 1.6.353 version. By default 353 build is disabled. In order to enable it this input must be set. If 353 is build from main branch you can specify it here."
@@ -331,6 +336,7 @@ jobs:
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_SE_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_SE_BUILD_PRESET }}
       CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
+      VCPKG_COMMIT_ID: ${{ inputs.VCPKG_COMMIT_ID }}
       BINARY_DIR: ${{ inputs.CMAKE_SE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -349,6 +355,7 @@ jobs:
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
       CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
+      VCPKG_COMMIT_ID: ${{ inputs.VCPKG_COMMIT_ID }}
       BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -369,6 +376,7 @@ jobs:
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
       CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
+      VCPKG_COMMIT_ID: ${{ inputs.VCPKG_COMMIT_ID }}
       BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
@@ -387,6 +395,7 @@ jobs:
       CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_VR_CONFIG_PRESET }}
       CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_VR_BUILD_PRESET }}
       CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
+      VCPKG_COMMIT_ID: ${{ inputs.VCPKG_COMMIT_ID }}
       BINARY_DIR: ${{ inputs.CMAKE_VR_BINARY_DIR }}
       BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
       BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
