@@ -37,6 +37,9 @@ on:
       VARIANT:
         type: string
         required: true
+    secrets:
+      GIT_SSH_KEY:
+        required: false
     outputs:
       ARTIFACT_NAME:
         value: ${{ jobs.build.outputs.ARTIFACT_NAME }}
@@ -64,14 +67,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: ${{inputs.GIT_BRANCH}}
-        submodules: true
+        ref: ${{ inputs.GIT_BRANCH }}
+        ssh-key: ${{ secrets.GIT_SSH_KEY }}
+        submodules: recursive
         fetch-depth: 0
-    
-    - name: "Print directory"
-      shell: pwsh
-      run: |
-        tree .
 
     - name: Use CommonLib 1.6.353
       if: inputs.GIT_COMMON_LIB_BRANCH != ''
@@ -121,7 +120,9 @@ jobs:
         $PDB_PATH = "$PRODUCTS_DIR/$PDB_NAME"
 
         $MARKETING_SUFFIX = "${{inputs.VARIANT}}".ToUpper()
-        $ARTIFACT_NAME = "$PRODUCT_NAME $MARKETING_SUFFIX"
+        $BUILD_TYPE = "${{inputs.CMAKE_CONFIG}}"
+
+        $ARTIFACT_NAME = "$PRODUCT_NAME $MARKETING_SUFFIX $BUILD_TYPE"
 
         echo "PRODUCT_NAME=$PRODUCT_NAME" >> $Env:GITHUB_OUTPUT
         echo "PRODUCT_VERSION=$PRODUCT_VERSION" >> $Env:GITHUB_OUTPUT

@@ -16,8 +16,10 @@ A universal workflow to build SKSE mods that are based on [powerof3/CommonLibSSE
 ### Contents
 + [Setting up the workflow](#setting-up-the-workflow)
 + [Examples](#examples)
++ [SSH](#ssh)
 + [CMake Configuration](#cmake-configuration)
     * [CMake Presets](#cmake-presets)
+    * [Build Configurations](#build-configurations)
     * [Binary Directory](#binary-directory)
     * [Project Root](#project-root)
     * [Binary Name and Version](#binary-name-and-version)
@@ -84,6 +86,23 @@ Here are some examples of configured workflows:
 - [AnimObjectSwapper](https://github.com/powerof3/AnimObjectSwapper/pull/2/files): Basic configuration, builds SE, AE, VR, packs installer into 7z with PDB files.
 - [EnhancedReanimation](https://github.com/powerof3/EnhancedReanimation/pull/2/files): Does everything that AnimObjectSwapper + supports AE 1.6.353 as a separate variant.
 - [Spell Perk Item Distributor](https://github.com/adya/Spell-Perk-Item-Distributor/pull/2/files): Showcases custom project path, configuration of the FOMOD, provides image and links to changelog and description files.
+
+---
+
+### SSH
+
+If your repository or one of it's submodules uses an SSH, you may specify an SSH key that workflow will use to checkout such repositories.
+
+> Note: You should provide your SSH key as a [Secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+
+```yaml
+jobs:
+  run:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    secrets:
+      GIT_SSH_KEY: ${{ secrets.MY_SSH_KEY }}
+```
+
 ---
 
 ### CMake Configuration
@@ -111,6 +130,31 @@ jobs:
 
 > The workflow checks whether specified **Configuration Presets** are present in `CMakePresets.json` and builds only variants that have existing presets.
 > You might explicitly disable building of any variant by passing blank string to corresponding **Configuration Preset**.
+
+---
+
+##### Build Configurations
+
+By default workflow assumes that `Release` build configuration will be used to build the project. This configuration is also used to determine path to the build artifacts that will be packed into FOMOD.
+When you want to use build configurations other than `Release` you can specify it with a `CMAKE_BUILD_CONFIGURATION` variable. 
+For example, if you want to create both `Release` and `Debug` variants of the mod you can do this in your `main.yaml`:
+```yaml
+jobs:
+  release:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    with:
+      CMAKE_BUILD_CONFIGURATION: 'Release'
+      FOMOD_MOD_NAME: "My SKSE Mod"
+      FOMOD_MOD_AUTHOR: "The Author"
+      
+  debug:
+    uses: adya/pack-skse-mod/.github/workflows/pack.yml@main
+    with:
+      CMAKE_BUILD_CONFIGURATION: 'Debug'
+      FOMOD_MOD_NAME: "My SKSE Mod DEBUG"
+      FOMOD_MOD_AUTHOR: "The Author"
+```
+This will produce two FOMOD installers with corresponding artifacts.
 
 ---
 
