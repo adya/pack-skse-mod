@@ -20,7 +20,7 @@ on:
         default: "NAME"
       CMAKE_BINARY_VERSION:
         type: string
-        description: "Version of the of the built binary. When CMAKE_BINARY_VERSION is set it takes precedence over CMAKE_SE_PRESET."
+        description: "Version of the of the built binary. When CMAKE_BINARY_VERSION is set it takes precedence over CMAKE_BINARY_VERSION_VAR."
         required: false
         default: ''
       CMAKE_BINARY_VERSION_VAR:
@@ -45,6 +45,7 @@ on:
         default: ''
       CMAKE_SE_BINARY_DIR:
         type: string
+        description: "Default directory where product will be built. Defaults to 'build'"
         required: false
         default: "build"
       CMAKE_AE_CONFIG_PRESET:
