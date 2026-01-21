@@ -37,9 +37,6 @@ on:
       VARIANT:
         type: string
         required: true
-      VCPKG_COMMIT_ID:
-        type: string
-        required: true
     secrets:
       GIT_SSH_KEY:
         required: false
@@ -90,7 +87,6 @@ jobs:
       id: runvcpkg
       with:
         vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-        vcpkgGitCommitId: '${{ inputs.VCPKG_COMMIT_ID }}'
         vcpkgJsonGlob: './${{inputs.CMAKE_PROJECT_DIR}}/vcpkg.json'
 
     - name: Configure CMake
