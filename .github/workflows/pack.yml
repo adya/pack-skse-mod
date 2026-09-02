@@ -3,453 +3,228 @@ name: Pack
 on:
   workflow_call:
     inputs:
+      CMAKE_LISTS_PATH:
+        type: string
+        description: "Path to the CMakeLists.txt holding the project's VERSION cache variable. Relative to repository root. Use a nested path (e.g. 'SPID/CMakeLists.txt') when the project isn't at the repo root."
+        required: false
+        default: 'CMakeLists.txt'
+      VCPKG_JSON_PATH:
+        type: string
+        description: "Path to the vcpkg.json holding the project's version-string, rewritten by the tag-driven version bump. Relative to repository root. In a multi-project repo this can differ from VCPKG_MANIFEST_PATH - see that input."
+        required: false
+        default: 'vcpkg.json'
+      VCPKG_MANIFEST_PATH:
+        type: string
+        description: "vcpkg manifest glob used to install dependencies for the build. Independent of VCPKG_JSON_PATH: in a multi-project repo (e.g. one root vcpkg.json aggregating dependencies for several CMake subprojects) the file driving the actual build isn't necessarily the same one that carries the product's own version-string."
+        required: false
+        default: 'vcpkg.json'
+      AUTO_VERSION_BUMP:
+        type: boolean
+        description: "Whether to rewrite CMAKE_LISTS_PATH/VCPKG_JSON_PATH's version fields to match the pushed tag (and force-move the tag onto that commit) before building. Set to false to build/publish using whatever version is already committed."
+        required: false
+        default: true
       CMAKE_PROJECT_DIR:
         type: string
-        description: "Path to a directory relative to CMake's BINARY_DIR (e.g. build/CMAKE_PROJECT_DIR/Release/mod.dll)"
+        description: "Path to the built project's output directory, relative to the CMake binary dir (e.g. 'SPID' if the DLL lands at build/SPID/Release/x.dll). Leave blank if the project builds straight into the binary dir."
         required: false
         default: ''
+      CMAKE_CONFIG_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json configure preset to use. CommonLibSSE-NG builds every enabled edition (SE/AE/VR) from this one preset - there's no per-edition preset anymore."
+        required: false
+        default: 'vs2026-windows-vcpkg'
+      CMAKE_BUILD_PRESET:
+        type: string
+        description: "Name of the CMakePresets.json build preset to use. Leave blank to build CMAKE_BINARY_DIR directly with CMAKE_BUILD_CONFIGURATION instead."
+        required: false
+        default: ''
+      CMAKE_BUILD_CONFIGURATION:
+        type: string
+        description: "Configuration the project is built in. Needed even when a build preset is given, since it's also used to locate build output."
+        required: false
+        default: 'Release'
+      CMAKE_BINARY_DIR:
+        type: string
+        description: "Directory where CMake outputs build files."
+        required: false
+        default: 'build'
       CMAKE_BINARY_NAME:
         type: string
-        description: "Name of the of the built binary. When CMAKE_BINARY_NAME is set it takes precedence over CMAKE_BINARY_NAME_VAR."
+        description: "Name of the built binary. Takes precedence over CMAKE_BINARY_NAME_VAR when set."
         required: false
         default: ''
       CMAKE_BINARY_NAME_VAR:
         type: string
-        description: "Name of the CMake variable that contains name of the built binary. Note that this variable must be CACHE variable."
+        description: "Name of the CMake CACHE variable holding the built binary's name."
         required: false
-        default: "NAME"
+        default: 'NAME'
       CMAKE_BINARY_VERSION:
         type: string
-        description: "Version of the of the built binary. When CMAKE_BINARY_VERSION is set it takes precedence over CMAKE_BINARY_VERSION_VAR."
+        description: "Version of the built binary. Takes precedence over CMAKE_BINARY_VERSION_VAR when set."
         required: false
         default: ''
       CMAKE_BINARY_VERSION_VAR:
         type: string
-        description: "Name of the CMake variable that contains version of the built binary. Note that this variable must be CACHE variable."
+        description: "Name of the CMake CACHE variable holding the built binary's version."
         required: false
-        default: "VERSION"
-      CMAKE_BUILD_CONFIGURATION:
-        type: string
-        description: "Configuration in which the project will be built. Note that you need to specify it even when providing build presets."
-        required: false
-        default: "Release"
-      CMAKE_SE_CONFIG_PRESET:
-        type: string
-        description: "Name of the CMakePresets.json's configuration to use to generate the project files for SE variant."
-        required: false
-        default: 'vs2022-windows-vcpkg-se'
-      CMAKE_SE_BUILD_PRESET:
-        type: string
-        description: "Name of the CMakePresets.json's configuration to build the project for SE variant."
-        required: false
-        default: ''
-      CMAKE_SE_BINARY_DIR:
-        type: string
-        description: "Default directory where product will be built. Defaults to 'build'"
-        required: false
-        default: "build"
-      CMAKE_AE_CONFIG_PRESET:
-        type: string
-        description: "Name of the CMakePresets.json's configuration to use to generate the project files for AE variant."
-        required: false
-        default: 'vs2022-windows-vcpkg-ae'
-      CMAKE_AE_BUILD_PRESET:
-        type: string
-        description: "Name of the CMakePresets.json's configuration to build the project for AE variant."
-        required: false
-        default: ''
-      CMAKE_AE_BINARY_DIR:
-        type: string
-        required: false
-        default: "buildae"
-      CMAKE_VR_CONFIG_PRESET:
-        type: string
-        description: "Name of the CMakePresets.json's configuration to use to generate the project files for VR variant."
-        required: false
-        default: 'vs2022-windows-vcpkg-vr'
-      CMAKE_VR_BUILD_PRESET:
-        type: string
-        description: "Name of the CMakePresets.json's configuration to build the project for VR variant."
-        required: false
-        default: ''
-      CMAKE_VR_BINARY_DIR:
-        type: string
-        required: false
-        default: "buildvr"
-      AE_353_BRANCH:
-        type: string
-        description: "Name of the branch in current repository that is compatible with 1.6.353 version. By default 353 build is disabled. In order to enable it this input must be set. If 353 is build from main branch you can specify it here."
-        required: false
-        default: ''
-      AE_353_COMMON_LIB_BRANCH:
-        type: string
-        description: "Name of the branch in powerof3/CommonLibSSE repo to be used when building AE 1.6.353 variant. This will forcefully update CommonLibSSE submodule to use latest commit of that branch instead."
-        required: false
-        default: 'dev-1.6.353'
-      FOMOD_INCLUDE_PDB:
+        default: 'VERSION'
+      INCLUDE_PDB:
         type: boolean
-        description: "Flag indicating whether PDB files should be packed into FOMOD along with DLLs."
+        description: "Whether to include the PDB file alongside the DLL in the published package."
         required: false
-        default: false
-      FOMOD_MOD_NAME:
+        default: true
+      REQUIRED_INSTALLATION_DIR:
         type: string
-        description: "Name of the mod that will be displayed in FOMOD Installer."
-        required: true
-      FOMOD_MOD_AUTHOR:
-        type: string
-        description: "Author of the mod that will be displayed in FOMOD Installer's metadata."
-        required: true
-      FOMOD_MOD_NEXUS_ID:
-        type: string
+        description: "Path to a directory (relative to repository root) whose contents should always ship alongside the DLL (e.g. INI configs, readmes). Its own internal layout must already be Data-folder-relative - it's copied as-is into the package root."
         required: false
-        description: "Id of the mod page on Nexus that will be displayed in FOMOD Installer's metadata."
-        default: ''
-      FOMOD_REQUIRED_INSTALLATION_DIR:
+        default: 'Required Files'
+      PLUGINS_PATH:
         type: string
-        description: "Path to the directory that contains game files that should always be installed. This path is relative to repository's root."
-        required: false
-        default: ''
-      FOMOD_REQUIRED_SRC_PATH:
-        type: string
-        description: "Path to the folder in FOMOD installer containing files that should always be installed."
-        required: false
-        default: 'Required'
-      FOMOD_REQUIRED_DST_PATH:
-        type: string
-        description: "Path to the installation directory where FOMOD will install required files. This path is relative to FOMOD Installer's root."
-        required: false
-        default: ''
-      FOMOD_DST_PATH:
-        type: string
-        description: "Path to the installation directory where FOMOD will install files. This is typically SKSE/Plugins."
+        description: "Path inside the package where the built DLL/PDB are installed. Typically 'SKSE/Plugins'."
         required: false
         default: 'SKSE/Plugins'
-      FOMOD_TITLE:
-        type: string
-        description: "Title of the installation page in FOMOD Installer (displayed under the mod's name)."
-        required: false
-        default: 'Main'
-      FOMOD_GROUP_NAME:
-        type: string
-        description: "Title of the group with installation options."
-        required: false
-        default: 'DLL'
-      FOMOD_DEFAULT_IMAGE:
-        type: string
-        description: "Path to the image file to be used as a default cover for all installation options. Ignored for variants that define their own image."
-        required: false
-        default: ''
-      FOMOD_SE_PATH:
-        type: string
-        description: "Path to SE binaries relative to FOMOD Installer's root."
-        required: false
-        default: 'SE/SKSE/Plugins'
-      FOMOD_SE_NAME:
-        type: string
-        description: "Name of the SE installation option."
-        required: false
-        default: 'SSE v1.5.97 ("Special Edition")'
-      FOMOD_SE_DESCR:
-        type: string
-        description: "Description of the SE installation option."
-        required: false
-        default: 'Select this if you are using Skyrim Special Edition v1.5.97.'
-      FOMOD_SE_IMAGE:
-        type: string
-        description: "Path to the image file to be used as a cover for SE installation option."
-        required: false
-        default: ''
-      FOMOD_SE_MIN_GAME_VERSION:
-        type: string
-        description: "Minimum version of the game that is recognized as SE variant."
-        required: false
-        default: '1.5.97.0'
-      FOMOD_AE353_PATH:
-        type: string
-        description: "Path to AE 1.6.353 binaries relative to FOMOD Installer's root."
-        required: false
-        default: 'AE353/SKSE/Plugins'
-      FOMOD_AE353_NAME:
-        type: string
-        description: "Name of the AE .353 installation option."
-        required: false
-        default: 'SSE v1.6.353 ("Anniversary Edition")'
-      FOMOD_AE353_DESCR:
-        type: string
-        description: "Description of the AE .353 installation option."
-        required: false
-        default: 'Select this if you are using Skyrim Anniversary Edition v1.6.353 or lower.'
-      FOMOD_AE353_IMAGE:
-        type: string
-        description: "Path to the image file to be used as a cover for AE .353 installation option."
-        required: false
-        default: ''
-      FOMOD_AE353_MIN_GAME_VERSION:
-        type: string
-        description: "Minimum version of the game that is recognized as AE 1.6.353 variant."
-        required: false
-        default: '1.6.317.0'
-      FOMOD_AE_PATH:
-        type: string
-        description: "Path to AE binaries relative to FOMOD Installer's root."
-        required: false
-        default: 'AE/SKSE/Plugins'
-      FOMOD_AE_NAME:
-        type: string
-        description: "Name of the AE installation option."
-        required: false
-        default: 'SSE v1.6.629+ ("Anniversary Edition")'
-      FOMOD_AE_DESCR:
-        type: string
-        description: "Description of the AE installation option."
-        required: false
-        default: 'Select this if you are using Skyrim Anniversary Edition v1.6.629 or higher (latest update).'
-      FOMOD_AE_IMAGE:
-        type: string
-        description: "Path to the image file to be used as a cover for AE installation option."
-        required: false
-        default: ''
-      FOMOD_AE_MIN_GAME_VERSION:
-        type: string
-        description: "Minimum version of the game that is recognized as AE variant."
-        required: false
-        default: '1.6.629.0'
-      FOMOD_VR_PATH:
-        type: string
-        description: "Path to VR binaries relative to FOMOD Installer's root."
-        required: false
-        default: 'VR/SKSE/Plugins'
-      FOMOD_VR_NAME:
-        type: string
-        description: "Name of the VR installation option."
-        required: false
-        default: 'VR v1.4.15 ("Skyrim VR")'
-      FOMOD_VR_DESCR:
-        type: string
-        description: "Description of the VR installation option."
-        required: false
-        default: 'Select this if you are using Skyrim VR v1.4.15.'
-      FOMOD_VR_IMAGE:
-        type: string
-        description: "Path to the image file to be used as a cover for VR installation option."
-        required: false
-        default: ''
-      FOMOD_VR_MIN_GAME_VERSION:
-        type: string
-        description: "Minimum version of the game that is recognized as VR variant."
-        required: false
-        default: '1.4.15.0'
       PUBLISH_ARCHIVE_TYPE:
         type: string
-        description: "Preferred type of archive to be used. Supports either zip or 7z"
+        description: "Archive format for the published release asset. Supports 'zip' or '7z'."
         required: false
-        default: 'zip'
-      PUBLISH_MOD_DESCRIPTION_FILE:
+        default: '7z'
+      MOD_NAME:
         type: string
-        description: "Path to a text file containing description of the mod's file. Path is relative to repository's root."
-        required: false
-        default: ''
-      PUBLISH_MOD_CHANGELOG_FILE:
-        type: string
-        description: "Path to a text file containing changelog that will be associated with the version being published. Path is relative to repository's root."
-        required: false
-        default: ''
+        description: "Display name used for the release name."
+        required: true
     secrets:
       GIT_SSH_KEY:
-        description: "Public part of the Deploy Key that will be used to checkout repository or any submodules when they use SSH."
+        description: "Public part of the Deploy Key used to checkout the repository or any submodules that use SSH."
         required: false
     outputs:
+      PRODUCT_NAME:
+        value: ${{ jobs.build.outputs.PRODUCT_NAME }}
       PRODUCT_VERSION:
-        value: ${{ jobs.fomod.outputs.MOD_VERSION }}
-      FOMOD_INSTALLER:
-        value: ${{ jobs.fomod.outputs.INSTALLER_NAME }}
-      SE_ARTIFACT_NAME:
-        value: ${{ jobs.se.outputs.ARTIFACT_NAME }}
-      AE_ARTIFACT_NAME:
-        value: ${{ jobs.ae.outputs.ARTIFACT_NAME }}
-      AE353_ARTIFACT_NAME:
-        value: ${{ jobs.ae353.outputs.ARTIFACT_NAME }}
-      VR_ARTIFACT_NAME:
-        value: ${{ jobs.vr.outputs.ARTIFACT_NAME }}
-      
+        value: ${{ jobs.build.outputs.PRODUCT_VERSION }}
+      PACKAGE_NAME:
+        value: ${{ jobs.build.outputs.PACKAGE_NAME }}
 
 jobs:
-  prepare:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      moved: ${{ steps.bump.outputs.moved || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: inputs.AUTO_VERSION_BUMP
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Verify tag points at branch tip
+        if: inputs.AUTO_VERSION_BUMP
+        run: |
+          BRANCH_SHA=$(git rev-parse HEAD)
+          if [ "$BRANCH_SHA" != "${{ github.sha }}" ]; then
+            echo "::error::Tag ${{ github.ref_name }} does not point at the tip of ${{ github.event.repository.default_branch }} ($BRANCH_SHA). Re-tag its tip and push again."
+            exit 1
+          fi
+
+      - name: Bump version files and move tag
+        id: bump
+        if: inputs.AUTO_VERSION_BUMP
+        run: |
+          VERSION=$(echo "${{ github.ref_name }}" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+          sed -i -E "s/set\(VERSION [0-9]+\.[0-9]+\.[0-9]+/set(VERSION $VERSION/" "${{ inputs.CMAKE_LISTS_PATH }}"
+          sed -i -E "s/\"version-string\": \"[0-9]+\.[0-9]+\.[0-9]+\"/\"version-string\": \"$VERSION\"/" "${{ inputs.VCPKG_JSON_PATH }}"
+
+          if git diff --quiet; then
+            echo "Version files already match tag $VERSION; nothing to do."
+            echo "moved=false" >> $GITHUB_OUTPUT
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "${{ inputs.CMAKE_LISTS_PATH }}" "${{ inputs.VCPKG_JSON_PATH }}"
+            git commit -m "Set version to $VERSION"
+            git push origin HEAD:${{ github.event.repository.default_branch }}
+            git tag -f "${{ github.ref_name }}"
+            git push origin "refs/tags/${{ github.ref_name }}" --force
+            echo "moved=true" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: version
+    if: needs.version.outputs.moved == 'false'
     runs-on: windows-latest
     outputs:
-      HAS_SE: ${{ steps.variants.outputs.HAS_SE }}
-      HAS_AE: ${{ steps.variants.outputs.HAS_AE }}
-      HAS_VR: ${{ steps.variants.outputs.HAS_VR }}
-      THE_HELL: ${{ steps.variants.outputs.THE_HELL }}
+      PRODUCT_NAME: ${{ steps.export.outputs.PRODUCT_NAME }}
+      PRODUCT_VERSION: ${{ steps.export.outputs.PRODUCT_VERSION }}
+      PACKAGE_NAME: ${{ steps.export.outputs.PACKAGE_NAME }}
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: false
+          ssh-key: ${{ secrets.GIT_SSH_KEY }}
+          submodules: recursive
+          fetch-depth: 0
 
-      - name: Check presets
-        id: variants
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: '${{ inputs.VCPKG_MANIFEST_PATH }}'
+
+      - name: Configure CMake
+        shell: pwsh
+        run: cmake --preset ${{ inputs.CMAKE_CONFIG_PRESET }}
+
+      - name: Build (via build preset)
+        if: inputs.CMAKE_BUILD_PRESET != ''
+        shell: pwsh
+        run: cmake --build --preset ${{ inputs.CMAKE_BUILD_PRESET }}
+
+      - name: Build (via binary dir)
+        if: inputs.CMAKE_BUILD_PRESET == ''
+        shell: pwsh
+        run: cmake --build ${{ inputs.CMAKE_BINARY_DIR }} --config ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
+
+      - id: export
         shell: pwsh
         run: |
-          $LIST = cmake --list-presets
-          $HAS_SE = ![string]::IsNullOrEmpty("${{inputs.CMAKE_SE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_SE_CONFIG_PRESET}}" -Quiet)
-          $HAS_AE = ![string]::IsNullOrEmpty("${{inputs.CMAKE_AE_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_AE_CONFIG_PRESET}}" -Quiet)
-          $HAS_VR = ![string]::IsNullOrEmpty("${{inputs.CMAKE_VR_CONFIG_PRESET}}") -and ($LIST | Select-String -Pattern "${{inputs.CMAKE_VR_CONFIG_PRESET}}" -Quiet)
-          if ($HAS_SE) {
-            echo "SE Variant: ✅"
-            echo "HAS_SE=true" >> $Env:GITHUB_OUTPUT
-          } else {
-            echo "SE Variant: ⬛"
-            echo "HAS_SE=false" >> $Env:GITHUB_OUTPUT
-          }
-          if ($HAS_AE) {
-            echo "AE Variant: ✅"
-            echo "HAS_AE=true" >> $Env:GITHUB_OUTPUT
-          } else {
-            echo "AE Variant: ⬛"
-            echo "HAS_AE=false" >> $Env:GITHUB_OUTPUT
-          }
-          if ($HAS_VR) {
-            echo "VR Variant: ✅"
-            echo "HAS_VR=true" >> $Env:GITHUB_OUTPUT
-          } else {
-            echo "VR Variant: ⬛"
-            echo "HAS_VR=false" >> $Env:GITHUB_OUTPUT
+          $PRODUCT_NAME = If (![string]::IsNullOrEmpty("${{ inputs.CMAKE_BINARY_NAME }}")) { "${{ inputs.CMAKE_BINARY_NAME }}" } Else { cmake -L -N ${{ inputs.CMAKE_BINARY_DIR }} | grep "^${{ inputs.CMAKE_BINARY_NAME_VAR }}:STRING=" | %{$_ -replace "${{ inputs.CMAKE_BINARY_NAME_VAR }}:STRING=",""} }
+          $PRODUCT_VERSION = If (![string]::IsNullOrEmpty("${{ inputs.CMAKE_BINARY_VERSION }}")) { "${{ inputs.CMAKE_BINARY_VERSION }}" } Else { cmake -L -N ${{ inputs.CMAKE_BINARY_DIR }} | grep "^${{ inputs.CMAKE_BINARY_VERSION_VAR }}:STRING=" | %{$_ -replace "${{ inputs.CMAKE_BINARY_VERSION_VAR }}:STRING=",""} }
+
+          $PROJECT_DIR = "${{ inputs.CMAKE_PROJECT_DIR }}"
+          $PRODUCTS_DIR = If ([string]::IsNullOrEmpty($PROJECT_DIR)) { "${{ inputs.CMAKE_BINARY_DIR }}/${{ inputs.CMAKE_BUILD_CONFIGURATION }}" } Else { "${{ inputs.CMAKE_BINARY_DIR }}/$PROJECT_DIR/${{ inputs.CMAKE_BUILD_CONFIGURATION }}" }
+
+          $PACKAGE_NAME = "$PRODUCT_NAME-${{ github.ref_name }}"
+          $PACKAGE_DIR = "package"
+          $PLUGIN_DIR = "$PACKAGE_DIR/${{ inputs.PLUGINS_PATH }}"
+
+          New-Item -ItemType Directory -Force -Path $PLUGIN_DIR | Out-Null
+          Copy-Item "$PRODUCTS_DIR/$PRODUCT_NAME.dll" $PLUGIN_DIR
+          If ('${{ inputs.INCLUDE_PDB }}' -eq 'true') {
+            Copy-Item "$PRODUCTS_DIR/$PRODUCT_NAME.pdb" $PLUGIN_DIR
           }
 
-          $ARCHIVE_TYPE = '${{ inputs.PUBLISH_ARCHIVE_TYPE }}'
-          
-          If (($ARCHIVE_TYPE -ne 'zip') -and ($ARCHIVE_TYPE -ne '7z')) {
-            echo "PUBLISH_ARCHIVE_TYPE must be either 'zip' or '7z', but not '$ARCHIVE_TYPE'"
-            exit 1
+          $REQUIRED_DIR = "${{ inputs.REQUIRED_INSTALLATION_DIR }}"
+          If (![string]::IsNullOrEmpty($REQUIRED_DIR) -and (Test-Path "$REQUIRED_DIR/*")) {
+            Copy-Item "$REQUIRED_DIR/*" $PACKAGE_DIR -Recurse -Force
           }
 
-  se:
-    needs: prepare
-    if: needs.prepare.outputs.HAS_SE == 'true'
-    uses: ./.github/workflows/build-variant.yml
-    with:
-      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_SE_CONFIG_PRESET }}
-      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_SE_BUILD_PRESET }}
-      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
-      BINARY_DIR: ${{ inputs.CMAKE_SE_BINARY_DIR }}
-      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
-      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
-      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
-      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
-      VARIANT: "se"
-    secrets:
-      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
-    
-  ae:
-    needs: prepare
-    if: needs.prepare.outputs.HAS_AE == 'true'
-    uses: ./.github/workflows/build-variant.yml
-    with:
-      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
-      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
-      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
-      BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
-      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
-      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
-      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
-      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
-      VARIANT: "ae"
-    secrets:
-      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
+          echo "PRODUCT_NAME=$PRODUCT_NAME" >> $Env:GITHUB_OUTPUT
+          echo "PRODUCT_VERSION=$PRODUCT_VERSION" >> $Env:GITHUB_OUTPUT
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $Env:GITHUB_OUTPUT
+          echo "PACKAGE_DIR=$PACKAGE_DIR" >> $Env:GITHUB_OUTPUT
+          echo "Built $PRODUCT_NAME.dll ($PRODUCT_VERSION) [OK]"
+          echo "Location: $PRODUCTS_DIR"
 
-  ae353:
-    needs: prepare
-    if: (needs.prepare.outputs.HAS_AE == 'true') && (inputs.AE_353_BRANCH != '')
-    uses: ./.github/workflows/build-variant.yml
-    with:
-      GIT_BRANCH: ${{inputs.AE_353_BRANCH}}
-      GIT_COMMON_LIB_BRANCH: ${{inputs.AE_353_COMMON_LIB_BRANCH}}
-      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_AE_CONFIG_PRESET }}
-      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_AE_BUILD_PRESET }}
-      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
-      BINARY_DIR: ${{ inputs.CMAKE_AE_BINARY_DIR }}
-      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
-      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
-      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
-      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
-      VARIANT: "ae353"
-    secrets:
-      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
-
-  vr:
-    needs: prepare
-    if: needs.prepare.outputs.HAS_VR == 'true'
-    uses: ./.github/workflows/build-variant.yml
-    with:
-      CMAKE_PROJECT_DIR: ${{ inputs.CMAKE_PROJECT_DIR }}
-      CMAKE_CONFIG_PRESET: ${{ inputs.CMAKE_VR_CONFIG_PRESET }}
-      CMAKE_BUILD_PRESET: ${{ inputs.CMAKE_VR_BUILD_PRESET }}
-      CMAKE_CONFIG: ${{ inputs.CMAKE_BUILD_CONFIGURATION }}
-      BINARY_DIR: ${{ inputs.CMAKE_VR_BINARY_DIR }}
-      BINARY_NAME: ${{ inputs.CMAKE_BINARY_NAME }}
-      BINARY_NAME_VAR: ${{ inputs.CMAKE_BINARY_NAME_VAR }}
-      BINARY_VERSION: ${{ inputs.CMAKE_BINARY_VERSION }}
-      BINARY_VERSION_VAR: ${{ inputs.CMAKE_BINARY_VERSION_VAR }}
-      VARIANT: "vr"
-    secrets:
-      GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
-
-  fomod:
-    needs: [se, ae, vr, ae353]
-    if: always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure'))
-    uses: ./.github/workflows/make-fomod.yml
-    with:
-      MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
-      MOD_AUTHOR: ${{ inputs.FOMOD_MOD_AUTHOR }}
-      MOD_NEXUS_ID: ${{ inputs.FOMOD_MOD_NEXUS_ID }}
-      REQUIRED_INSTALLATION_DIR: ${{ inputs.FOMOD_REQUIRED_INSTALLATION_DIR }}
-      REQUIRED_SRC_PATH: ${{ inputs.FOMOD_REQUIRED_SRC_PATH }}
-      REQUIRED_DST_PATH: ${{ inputs.FOMOD_REQUIRED_DST_PATH }}
-      DST_PATH: ${{ inputs.FOMOD_DST_PATH }}
-      INCLUDE_PDB: ${{ inputs.FOMOD_INCLUDE_PDB }}
-      TITLE: ${{ inputs.FOMOD_TITLE }}
-      GROUP_NAME: ${{ inputs.FOMOD_GROUP_NAME }}
-      DEFAULT_IMAGE: ${{ inputs.FOMOD_DEFAULT_IMAGE }}
-      SE_PATH: ${{ inputs.FOMOD_SE_PATH }}
-      SE_NAME: ${{ inputs.FOMOD_SE_NAME }}
-      SE_DESCR: ${{ inputs.FOMOD_SE_DESCR }}
-      SE_IMAGE: ${{ inputs.FOMOD_SE_IMAGE }}
-      SE_MIN_GAME_VERSION: ${{ inputs.FOMOD_SE_MIN_GAME_VERSION }}
-      SE_VERSION: ${{ needs.se.outputs.PRODUCT_VERSION }}
-      SE_ARTIFACT: ${{ needs.se.outputs.ARTIFACT_NAME }}
-      AE_PATH: ${{ inputs.FOMOD_AE_PATH }}
-      AE_NAME: ${{ inputs.FOMOD_AE_NAME }}
-      AE_DESCR: ${{ inputs.FOMOD_AE_DESCR }}
-      AE_IMAGE: ${{ inputs.FOMOD_AE_IMAGE }}
-      AE_MIN_GAME_VERSION: ${{ inputs.FOMOD_AE_MIN_GAME_VERSION }}
-      AE_VERSION: ${{ needs.ae.outputs.PRODUCT_VERSION }}
-      AE_ARTIFACT: ${{ needs.ae.outputs.ARTIFACT_NAME }}
-      AE353_PATH: ${{ inputs.FOMOD_AE353_PATH }}
-      AE353_NAME: ${{ inputs.FOMOD_AE353_NAME }}
-      AE353_DESCR: ${{ inputs.FOMOD_AE353_DESCR }}
-      AE353_IMAGE: ${{ inputs.FOMOD_AE353_IMAGE }}
-      AE353_MIN_GAME_VERSION: ${{ inputs.FOMOD_AE353_MIN_GAME_VERSION }}
-      AE353_VERSION: ${{ needs.ae353.outputs.PRODUCT_VERSION }}
-      AE353_ARTIFACT: ${{ needs.ae353.outputs.ARTIFACT_NAME }}
-      VR_PATH: ${{ inputs.FOMOD_VR_PATH }}
-      VR_NAME: ${{ inputs.FOMOD_VR_NAME }}
-      VR_DESCR: ${{ inputs.FOMOD_VR_DESCR }}
-      VR_IMAGE: ${{ inputs.FOMOD_VR_IMAGE }}
-      VR_MIN_GAME_VERSION: ${{ inputs.FOMOD_VR_MIN_GAME_VERSION }}
-      VR_VERSION: ${{ needs.vr.outputs.PRODUCT_VERSION }}
-      VR_ARTIFACT: ${{ needs.vr.outputs.ARTIFACT_NAME }}
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.export.outputs.PACKAGE_NAME }}
+          if-no-files-found: error
+          path: ${{ steps.export.outputs.PACKAGE_DIR }}
 
   publish:
-    needs: fomod
-    if: always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) && github.ref_type == 'tag'
+    needs: build
+    if: github.ref_type == 'tag'
     uses: ./.github/workflows/publish.yml
     with:
-      INSTALLER_NAME: ${{ needs.fomod.outputs.INSTALLER_NAME }}
+      INSTALLER_NAME: ${{ needs.build.outputs.PACKAGE_NAME }}
       ARCHIVE_TYPE: ${{ inputs.PUBLISH_ARCHIVE_TYPE }}
-      MOD_NAME: ${{ inputs.FOMOD_MOD_NAME }}
-      MOD_VERSION: ${{ needs.fomod.outputs.MOD_VERSION }}
-      MOD_DESCRIPTION: ${{ inputs.PUBLISH_MOD_DESCRIPTION_FILE }}
-      MOD_CHANGELOG: ${{ inputs.PUBLISH_MOD_CHANGELOG_FILE }}
+      MOD_NAME: ${{ inputs.MOD_NAME }}
+      MOD_VERSION: ${{ needs.build.outputs.PRODUCT_VERSION }}
