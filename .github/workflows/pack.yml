@@ -108,7 +108,7 @@ jobs:
   version:
     runs-on: ubuntu-latest
     outputs:
-      moved: ${{ steps.bump.outputs.moved || 'false' }}
+      sha: ${{ steps.bump.outputs.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         if: inputs.AUTO_VERSION_BUMP
@@ -135,7 +135,6 @@ jobs:
 
           if git diff --quiet; then
             echo "Version files already match tag $VERSION; nothing to do."
-            echo "moved=false" >> $GITHUB_OUTPUT
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -144,12 +143,11 @@ jobs:
             git push origin HEAD:${{ github.event.repository.default_branch }}
             git tag -f "${{ github.ref_name }}"
             git push origin "refs/tags/${{ github.ref_name }}" --force
-            echo "moved=true" >> $GITHUB_OUTPUT
           fi
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
   build:
     needs: version
-    if: needs.version.outputs.moved == 'false'
     runs-on: windows-latest
     outputs:
       PRODUCT_NAME: ${{ steps.export.outputs.PRODUCT_NAME }}
@@ -158,6 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.version.outputs.sha }}
           ssh-key: ${{ secrets.GIT_SSH_KEY }}
           submodules: recursive
           fetch-depth: 0

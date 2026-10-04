@@ -200,7 +200,8 @@ On every tag push, before building, the workflow can rewrite your version files 
 
 1. Checks out the repository's default branch and verifies the pushed tag actually points at that branch's current tip - fails loudly if not (re-tag its tip and push again).
 2. Extracts the version from the tag name (`X.Y.Z`), and rewrites it into `CMAKE_LISTS_PATH`'s `set(VERSION ...)` and `VCPKG_JSON_PATH`'s `"version-string"`.
-3. If that changed anything, commits, pushes, force-moves the tag onto the new commit, and force-pushes the tag - which re-triggers this same workflow. The second run finds the version files already match and proceeds to build/package/publish normally.
+3. If that changed anything, commits, pushes, force-moves the tag onto the new commit, and force-pushes the tag.
+4. Builds, packages and publishes that tagged commit.
 
 ```yaml
 jobs:
