@@ -15,6 +15,10 @@ on:
       MOD_VERSION:
         type: string
         required: true
+      GENERATE_RELEASE_NOTES:
+        type: boolean
+        required: false
+        default: true
 jobs:
   github:
     runs-on: windows-latest
@@ -49,4 +53,4 @@ jobs:
         name: "${{ steps.release.outputs.RELEASE_NAME }}"
         files: "${{ inputs.INSTALLER_NAME }}.${{inputs.ARCHIVE_TYPE}}"
         prerelease: ${{ contains(github.ref_name, 'rc') }}
-        generate_release_notes: true
+        generate_release_notes: ${{ inputs.GENERATE_RELEASE_NOTES }}

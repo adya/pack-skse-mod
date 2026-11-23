@@ -88,6 +88,11 @@ on:
         description: "Archive format for the published release asset. Supports 'zip' or '7z'."
         required: false
         default: '7z'
+      GENERATE_RELEASE_NOTES:
+        type: boolean
+        description: "Whether GitHub should auto-generate the release notes. Set to false to publish the release with an empty body that you can write yourself."
+        required: false
+        default: true
       MOD_NAME:
         type: string
         description: "Display name used for the release name."
@@ -227,3 +232,4 @@ jobs:
       ARCHIVE_TYPE: ${{ inputs.PUBLISH_ARCHIVE_TYPE }}
       MOD_NAME: ${{ inputs.MOD_NAME }}
       MOD_VERSION: ${{ needs.build.outputs.PRODUCT_VERSION }}
+      GENERATE_RELEASE_NOTES: ${{ inputs.GENERATE_RELEASE_NOTES }}
